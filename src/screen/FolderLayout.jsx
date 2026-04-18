@@ -50,7 +50,7 @@ import { useLoader } from "../context/LoaderContext";
 import { useTranslation } from 'react-i18next';
 import axios from "axios";
 import Toast from 'react-native-toast-message';
-import { uploadImageToFirebase } from '../utils/firebaseUpload';
+
 // SVGs
 import QR from "../../assets/svg/qr.svg";
 
@@ -153,19 +153,16 @@ const FolderLayout = ({ navigation, route }) => {
     try {
       setGalleryLoading(true);
 
-      const token = await AsyncStorage.getItem("token");
-      const storedUser = await AsyncStorage.getItem("user");
-      if (!token || !storedUser) return;
+      const stored = await AsyncStorage.getItem("HIVES");
+      const hives = stored ? JSON.parse(stored) : [];
 
-      const res = await axios.get(
-        `https://snaphive-node.vercel.app/api/hives/${hiveId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const hive = hives.find(h => h.id === hiveId);
 
-      const hive = res.data.data;
+      if (!hive) return;
+
       setHiveInfo(hive);
 
-      // 🔥 MERGE IMAGES + VIDEOS
+      // merge images + videos
       const mergedMedia = [
         ...(hive.images || []).map(img => ({
           ...img,
@@ -174,15 +171,15 @@ const FolderLayout = ({ navigation, route }) => {
         ...(hive.videos || []).map(video => ({
           ...video,
           type: "video",
-          blurred: false, // videos don't support blur yet
+          blurred: false,
         })),
       ];
 
       setUploadedImages(mergedMedia);
-
       setMembersList(hive.members || []);
+
     } catch (err) {
-      console.error(err);
+      console.error("Local fetch error:", err);
     } finally {
       setGalleryLoading(false);
     }
@@ -204,101 +201,40 @@ const FolderLayout = ({ navigation, route }) => {
   }, [fetchHive]);
 
   const handleUpload = async () => {
-    if (isUploading) return;
-    setIsUploading(true);
-    setUploadProgress(0);
     launchImageLibrary(
       {
         mediaType: "mixed",
         selectionLimit: 0,
-        quality: 0.6,
       },
-      async response => {
-        if (response.didCancel || !response.assets?.length) {
-          setIsUploading(false);
-          return;
-        }
+      async (response) => {
+        if (response.didCancel || !response.assets?.length) return;
 
         try {
-          const token = await AsyncStorage.getItem("token");
-          const storedUser = await AsyncStorage.getItem("user");
+          const stored = await AsyncStorage.getItem("HIVES");
+          let hives = stored ? JSON.parse(stored) : [];
 
-          if (!token || !storedUser) {
-            throw new Error("Auth missing");
-          }
+          const newMedia = response.assets.map(asset => ({
+            url: asset.uri,
+            type: asset.type?.startsWith("video") ? "video" : "image",
+            blurred: false,
+          }));
 
-          const parsedUser = JSON.parse(storedUser);
-          const userId = parsedUser._id || parsedUser.id;
+          hives = hives.map(h => {
+            if (h.id !== hiveId) return h;
 
-          if (!userId) {
-            throw new Error("User ID missing");
-          }
-
-          console.log("USER:", userId);
-          console.log("HIVE:", hiveId);
-
-          const uploadResults = await Promise.all(
-            response.assets.map(async asset => {
-              const uploadResult = await uploadImageToFirebase(
-                asset,
-                userId,
-                hiveId
-              );
-              // progrress
-              setUploadProgress((prev) => prev + (100 / response.assets.length));
-              // ✅ normalize result
-              const url =
-                typeof uploadResult === "string"
-                  ? uploadResult
-                  : uploadResult.url;
-
-              const isVideo =
-                asset.type?.startsWith("video") ||
-                url.endsWith(".mp4") ||
-                url.endsWith(".mov");
-
-              return { url, isVideo };
-            })
-          );
-
-          const images = uploadResults
-            .filter(x => !x.isVideo)
-            .map(x => x.url);
-
-          const videos = uploadResults
-            .filter(x => x.isVideo)
-            .map(x => ({
-              url: x.url,
-              thumbnail: null,
-            }));
-
-          await axios.post(
-            `https://snaphive-node.vercel.app/api/hives/${hiveId}/images`,
-            { images, videos },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-
-          // refresh gallery automatically
-          await fetchHive();
-
-
-          // ✅ ensure full progress
-          setUploadProgress(100);
-          Toast.show({
-            type: "success",
-            text1: "Upload Successful",
-            text2: `${uploadResults.length} media uploaded`,
+            return {
+              ...h,
+              images: [...(h.images || []), ...newMedia.filter(m => m.type === "image")],
+              videos: [...(h.videos || []), ...newMedia.filter(m => m.type === "video")],
+            };
           });
+
+          await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
+
+          fetchHive(); // refresh UI
+
         } catch (e) {
-          console.error("Gallery upload error:", e?.response?.data || e.message);
-          Toast.show({ type: "error", text1: "Upload failed" });
-        } finally {
-          setTimeout(() => {
-            setIsUploading(false);
-            setUploadProgress(0);
-          }, 400);
+          console.log("Upload error:", e);
         }
       }
     );
@@ -308,7 +244,7 @@ const FolderLayout = ({ navigation, route }) => {
 
   const toggleFlag = async (index, currentBlur) => {
     try {
-      const token = await AsyncStorage.getItem("token");
+
 
       await axios.put(
         `https://snaphive-node.vercel.app/api/hives/${hiveId}/blur-image`,
@@ -439,7 +375,16 @@ const FolderLayout = ({ navigation, route }) => {
     );
   };
 
+  useEffect(() => {
+    const fakeUser = {
+      id: "user123",
+      name: "You",
+      email: "you@mail.com",
+    };
 
+    AsyncStorage.setItem("user", JSON.stringify(fakeUser));
+    setLoggedUser(fakeUser);
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {

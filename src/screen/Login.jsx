@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, TouchableWithoutFeedback, useWindowDimensions, ActivityIndicator, Dimensions, ScrollView, Keyboard, Pressable } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { loginUser } from "../API/API";
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLoader } from "../context/LoaderContext";
 import AppModal from "../components/AppModal";
@@ -14,10 +14,9 @@ const logo = require("../../assets/logo.png");
 // svg
 import Igoogle from "../../assets/Igoogle.svg";
 import Iapple from "../../assets/apple2.svg";
-import messaging from "@react-native-firebase/messaging";
-import axios from "axios";
+
 import { PermissionsAndroid, Platform } from "react-native";
-import appleAuth from '@invertase/react-native-apple-authentication';
+
 
 
 
@@ -57,8 +56,7 @@ const Login = ({ navigation }) => {
 
 
 
-    const isValidEmail = (text) => /\S+@\S+\.\S+/.test(text);
-    const isValidPhone = (text) => /^[0-9]{10,15}$/.test(text);
+
 
     const handleContinue = async () => {
         Keyboard.dismiss();
@@ -71,7 +69,7 @@ const Login = ({ navigation }) => {
             });
             return;
         }
-
+        navigation.navigate("MyTabs")
         if (!password.trim()) {
             showModal({
                 title: "Password Required",
@@ -81,57 +79,7 @@ const Login = ({ navigation }) => {
             return;
         }
 
-        let formattedPhone = null;
 
-        if (!isValidEmail(userID)) {
-            const phoneNumber = parsePhoneNumberFromString(userID, "IN"); // default country
-
-            if (phoneNumber && phoneNumber.isValid()) {
-                formattedPhone = phoneNumber.number; // returns +countrycode format
-            } else if (!isValidEmail(userID)) {
-                showModal({
-                    title: "Invalid Input",
-                    message: "Please enter a valid phone number",
-                    type: "error",
-                });
-                return;
-            }
-        }
-
-        try {
-            showLoader();
-
-            const payload = {
-                email: isValidEmail(userID) ? userID : null,
-                phone: formattedPhone,
-                password,
-            };
-
-            const res = await loginUser(payload);
-
-            if (res.data && res.data.token) {
-                await AsyncStorage.setItem("token", res.data.token);
-                await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
-
-                navigation.replace("MyTabs");
-            } else {
-                showModal({
-                    title: "Server Error",
-                    message: "Invalid response from server",
-                    type: "error",
-                });
-            }
-
-        } catch (err) {
-            showModal({
-                title: "Login Failed",
-                message: err.response?.data?.message || "Login failed",
-                type: "error",
-            });
-
-        } finally {
-            hideLoader();
-        }
     };
 
 
@@ -191,10 +139,7 @@ const Login = ({ navigation }) => {
                                 style={[
                                     styles.continueTxt,
                                     {
-                                        fontSize: width * 0.03,
-                                        fontFamily: 'Montserrat-Medium',
-                                        fontWeight: '600',
-                                        color: '#000', // White text
+                                        fontSize: width * 0.03, fontFamily: 'Montserrat-Medium', fontWeight: '600', color: '#000', // White text
                                     },
                                 ]}
                             >

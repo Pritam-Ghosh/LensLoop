@@ -1,24 +1,14 @@
 import { View, ScrollView, Image, StyleSheet, TouchableOpacity, TextInput, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import React, { useEffect, useState, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  setDoc,
-  doc,
-  updateDoc,
-  arrayUnion
-} from "firebase/firestore";
+
 
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomText from '../components/CustomText';
 import { ArrowLeft, Ellipsis, SendHorizonal } from "lucide-react-native";
-import { db } from "../firebaseConfig";
-import { generateChatId } from "../utils/chatUtils";
+
+
 import BackgroungUI from '../components/BackgroundUI';
 
 const { width, height } = Dimensions.get("window");
@@ -50,98 +40,43 @@ const Chat = ({ route, navigation }) => {
     loadUser();
   }, []);
 
-  // Listen to Firestore messages
-  useEffect(() => {
-    if (!loggedUser) return;
 
-    const chatId = generateChatId(hiveId, loggedUser._id, user._id);
-    const msgRef = collection(db, "chats", chatId, "messages");
 
-    const q = query(msgRef, orderBy("createdAt", "asc"));
 
-    const unsub = onSnapshot(q, (snap) => {
-      const msgs = snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          ...data,
-          createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
-        };
-      });
-
-      setMessages(msgs);
-
-      setTimeout(() => {
-        if (scrollRef.current) scrollRef.current.scrollToEnd({ animated: true });
-      }, 100);
-    });
-
-    return unsub;
-  }, [loggedUser]);
-
-  const updateTypingStatus = async (typing) => {
-    if (!loggedUser) return;
-
-    const chatId = generateChatId(hiveId, loggedUser._id, user._id);
-
-    await setDoc(
-      doc(db, "chats", chatId),
-      {
-        typing: {
-          [loggedUser._id]: typing
-        }
-      },
-      { merge: true }
-    );
-  };
-  useEffect(() => {
-    if (!loggedUser) return;
-
-    const chatId = generateChatId(hiveId, loggedUser._id, user._id);
-
-    const unsub = onSnapshot(doc(db, "chats", chatId), (snap) => {
-      if (!snap.exists()) return;
-
-      const typingData = snap.data().typing || {};
-      setOtherUserTyping(typingData[user._id] === true);
-    });
-
-    return unsub;
-  }, [loggedUser]);
 
   // Send message
   const sendMessage = async () => {
     if (!text.trim()) return;
-    setIsTyping(false);
-    updateTypingStatus(false);
 
-
-    const chatId = generateChatId(hiveId, loggedUser._id, user._id);
-
-    await addDoc(collection(db, "chats", chatId, "messages"), {
+    const newMsg = {
+      id: Date.now().toString(),
       text,
       senderId: loggedUser._id,
       createdAt: new Date(),
       deletedFor: [],
-      isDeleted: false
-    });
+      isDeleted: false,
+    };
 
+    const key = `CHAT_${hiveId}_${loggedUser._id}_${user._id}`;
 
-    await setDoc(
-      doc(db, "chats", chatId),
-      {
-        hiveId,
-        hiveName: route.params?.folderName || "",
-        users: [loggedUser._id, user._id],
-        lastMessage: text,
-        updatedAt: new Date(),
-      },
-      { merge: true }
-    );
+    const stored = await AsyncStorage.getItem(key);
+    let msgs = stored ? JSON.parse(stored) : [];
 
+    msgs.push(newMsg);
+
+    await AsyncStorage.setItem(key, JSON.stringify(msgs));
+
+    setMessages(msgs);
     setText("");
     Keyboard.dismiss();
+
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
+
+
+
   const toggleSelect = (id) => {
     setSelectedMessages(prev =>
       prev.includes(id)
@@ -150,27 +85,38 @@ const Chat = ({ route, navigation }) => {
     );
   };
   const deleteForMe = async () => {
-    const chatId = generateChatId(hiveId, loggedUser._id, user._id);
+    const key = `CHAT_${hiveId}_${loggedUser._id}_${user._id}`;
 
-    for (let id of selectedMessages) {
-      await updateDoc(doc(db, "chats", chatId, "messages", id), {
-        deletedFor: arrayUnion(loggedUser._id)
-      });
-    }
+    const stored = await AsyncStorage.getItem(key);
+    let msgs = stored ? JSON.parse(stored) : [];
+
+    msgs = msgs.map(m =>
+      selectedMessages.includes(m.id)
+        ? { ...m, deletedFor: [...(m.deletedFor || []), loggedUser._id] }
+        : m
+    );
+
+    await AsyncStorage.setItem(key, JSON.stringify(msgs));
+    setMessages(msgs);
 
     setSelectedMessages([]);
     setDeleteModal(false);
   };
 
   const deleteForEveryone = async () => {
-    const chatId = generateChatId(hiveId, loggedUser._id, user._id);
+    const key = `CHAT_${hiveId}_${loggedUser._id}_${user._id}`;
 
-    for (let id of selectedMessages) {
-      await updateDoc(doc(db, "chats", chatId, "messages", id), {
-        text: "",
-        isDeleted: true
-      });
-    }
+    const stored = await AsyncStorage.getItem(key);
+    let msgs = stored ? JSON.parse(stored) : [];
+
+    msgs = msgs.map(m =>
+      selectedMessages.includes(m.id)
+        ? { ...m, text: "", isDeleted: true }
+        : m
+    );
+
+    await AsyncStorage.setItem(key, JSON.stringify(msgs));
+    setMessages(msgs);
 
     setSelectedMessages([]);
     setDeleteModal(false);
@@ -214,7 +160,7 @@ const Chat = ({ route, navigation }) => {
                     color: otherUserTyping ? "#DA3C84" : "#00A236"
                   }}
                 >
-                  {otherUserTyping ? "Typing..." : "Online"}
+                  Online
                 </CustomText>
 
               </View>
@@ -285,18 +231,7 @@ const Chat = ({ route, navigation }) => {
             placeholder="Type here.."
             placeholderTextColor="#AAAAAA"
             value={text}
-            onChangeText={(val) => {
-              setText(val);
 
-              if (!isTyping) {
-                setIsTyping(true);
-                updateTypingStatus(true);
-              }
-            }}
-            onBlur={() => {
-              setIsTyping(false);
-              updateTypingStatus(false);
-            }}
 
             multiline={false}
             returnKeyType="send"

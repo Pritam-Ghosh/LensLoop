@@ -83,36 +83,54 @@ const Profile = ({ navigation, }) => {
       console.log("Share Error:", error);
     }
   };
+useEffect(() => {
+  const loadUser = async () => {
+    const stored = await AsyncStorage.getItem("user");
 
+    if (!stored) {
+      const demoUser = {
+        id: "user123",
+        name: "Pritam",
+        email: "pritam@mail.com",
+        profileImage: null,
+      };
 
-  const handleLogout = async () => {
-    try {
-      showLoader();
-
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("user");
-
-      Toast.show({
-        type: 'success',
-        text1: 'Logged Out',
-        text2: 'See you again 👋',
-      });
-
-      setTimeout(() => {
-        navigation.replace("Login");
-      }, 500);
-
-    } catch (err) {
-      Toast.show({
-        type: 'error',
-        text1: 'Logout Failed',
-        text2: 'Please try again',
-      });
-      console.error("Logout error:", err);
-    } finally {
-      hideLoader();
+      await AsyncStorage.setItem("user", JSON.stringify(demoUser));
+      setUser(demoUser);
+    } else {
+      setUser(JSON.parse(stored));
     }
   };
+
+  loadUser();
+}, []);
+
+const handleLogout = async () => {
+  try {
+    showLoader();
+
+    // ❌ DO NOT remove user (frontend app needs it)
+    // await AsyncStorage.removeItem("user");
+
+    Toast.show({
+      type: 'success',
+      text1: 'Logged Out',
+      text2: 'Demo mode reset 👋',
+    });
+navigation.navigate('Signup');
+    // Optional: clear app data if needed
+    // await AsyncStorage.clear();
+
+  } catch (err) {
+    Toast.show({
+      type: 'error',
+      text1: 'Logout Failed',
+      text2: 'Please try again',
+    });
+  } finally {
+    hideLoader();
+  }
+};
 
 
 

@@ -15,11 +15,11 @@ import { useLoader } from "../context/LoaderContext";
 import AppModal from "../components/AppModal";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import PhoneInput from "react-native-phone-number-input";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 // components
-import { registerUser } from "../API/API";
+
 import CustomText from '../components/CustomText';
 import ThemeButton from '../components/ThemeButton';
 import Logo from '../components/Logo';
@@ -67,16 +67,15 @@ const Signup = ({ navigation }) => {
     setModalVisible(true);
   };
 
-
-  const handleContinue = () => {
+  const handleContinue = async () => {
     Keyboard.dismiss();
+
     if (!userID.trim()) {
       showModal({
         title: "Create Account",
         message: "Please enter your email or phone number",
         type: "warning",
       });
-
       return;
     }
 
@@ -86,7 +85,6 @@ const Signup = ({ navigation }) => {
         message: "Please enter a valid email or phone number",
         type: "error",
       });
-
       return;
     }
 
@@ -96,61 +94,48 @@ const Signup = ({ navigation }) => {
         message: "Please create a password",
         type: "warning",
       });
-
       return;
     }
 
-    // ✅ SHOW LOADER
     showLoader();
 
-    const payload = {
-      name: isValidEmail(userID) ? userID.split("@")[0] : null,
-      password,
-      email: isValidEmail(userID) ? userID : null,
-      phone: !isValidEmail(userID) ? formattedPhone : null,
-    };
-    registerUser(payload)
-      .then((res) => {
-        hideLoader(); // ✅ HIDE LOADER
+    try {
+      // 🔥 CREATE LOCAL USER
+      const newUser = {
+        id: Date.now().toString(),
+        name: isValidEmail(userID) ? userID.split("@")[0] : "User",
+        email: isValidEmail(userID) ? userID : null,
+        phone: !isValidEmail(userID) ? formattedPhone : null,
+        profileImage: null,
+      };
 
-        console.log("Register Response:", res.data);
+      // 💾 SAVE LOCALLY
+      await AsyncStorage.setItem("user", JSON.stringify(newUser));
 
-        if (res.data && res.data.message.includes("OTP sent")) {
-          showModal({
-            title: "OTP Sent",
-            message: isValidEmail(userID)
-              ? "We’ve sent a verification code to your email"
-              : "We’ve sent a verification code to your phone",
-            type: "success",
-          });
+      hideLoader();
 
-          setTimeout(() => {
-            navigation.navigate("OTP", {
-              email: isValidEmail(userID) ? userID : null,
-              phone: isValidPhone(userID) ? userID : null,
-            });
-          }, 1200);
-
-        } else {
-          showModal({
-            title: "Signup Failed",
-            message: res.data.message || "Something went wrong",
-            type: "error",
-          });
-
-        }
-      })
-      .catch((err) => {
-        hideLoader(); // ✅ HIDE LOADER (VERY IMPORTANT)
-
-        console.log("Register error:", err.response?.data || err.message);
-        showModal({
-          title: "Registration Failed",
-          message: err.response?.data?.message || "Registration failed",
-          type: "error",
-        });
-
+      // ✅ SAME UI EXPERIENCE (simulate OTP)
+      showModal({
+        title: "OTP Sent",
+        message: isValidEmail(userID)
+          ? "We’ve sent a verification code to your email"
+          : "We’ve sent a verification code to your phone",
+        type: "success",
       });
+
+      setTimeout(() => {
+        navigation.replace("OTP");
+      }, 1200);
+
+    } catch (err) {
+      hideLoader();
+
+      showModal({
+        title: "Registration Failed",
+        message: "Something went wrong",
+        type: "error",
+      });
+    }
   };
 
 

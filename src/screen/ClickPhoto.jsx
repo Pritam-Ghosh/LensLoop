@@ -11,8 +11,8 @@ import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { useIsFocused } from '@react-navigation/native';
 
 import ViewShot from "react-native-view-shot";
-import axios from "axios";
-import { uploadImageToFirebase } from '../utils/firebaseUpload';
+
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // Components
 import TopNav from '../components/TopNavbar';
@@ -62,11 +62,11 @@ const ClickPhoto = ({ navigation, route }) => {
 
     const isMounted = useRef(true);
 
-useEffect(() => {
-    return () => {
-        isMounted.current = false;
-    };
-}, []);
+    useEffect(() => {
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
     useEffect(() => {
         if (isFocused) {
@@ -104,31 +104,31 @@ useEffect(() => {
             await cameraRef.current.startRecording({
                 flash: "off",
 
-        onRecordingFinished: (video) => {
-    clearInterval(timerRef.current);
+                onRecordingFinished: (video) => {
+                    clearInterval(timerRef.current);
 
-    if (!isMounted.current) return; // ✅ prevent crash
+                    if (!isMounted.current) return; // ✅ prevent crash
 
-    const uri =
-        Platform.OS === "ios"
-            ? video.path.startsWith("file://")
-                ? video.path
-                : `file://${video.path}`
-            : `file://${video.path}`;
+                    const uri =
+                        Platform.OS === "ios"
+                            ? video.path.startsWith("file://")
+                                ? video.path
+                                : `file://${video.path}`
+                            : `file://${video.path}`;
 
-    setVideoPath(uri);
-    setShowCamera(false);
-    setIsRecording(false);
-},
+                    setVideoPath(uri);
+                    setShowCamera(false);
+                    setIsRecording(false);
+                },
 
-  onRecordingError: (error) => {
-    clearInterval(timerRef.current);
+                onRecordingError: (error) => {
+                    clearInterval(timerRef.current);
 
-    if (!isMounted.current) return;
+                    if (!isMounted.current) return;
 
-    console.log("❌ Record error:", error);
-    setIsRecording(false);
-},
+                    console.log("❌ Record error:", error);
+                    setIsRecording(false);
+                },
             });
         } catch (e) {
             console.log("❌ Start record error:", e);
@@ -143,18 +143,18 @@ useEffect(() => {
         await cameraRef.current.stopRecording();
     };*/
 
-const stopRecording = async () => {
-    if (!cameraRef.current || !isRecording) return;
+    const stopRecording = async () => {
+        if (!cameraRef.current || !isRecording) return;
 
-    setIsRecording(false); // ✅ prevent double trigger
-    clearInterval(timerRef.current);
+        setIsRecording(false); // ✅ prevent double trigger
+        clearInterval(timerRef.current);
 
-    try {
-        await cameraRef.current.stopRecording();
-    } catch (e) {
-        console.log("Stop recording error:", e);
-    }
-};
+        try {
+            await cameraRef.current.stopRecording();
+        } catch (e) {
+            console.log("Stop recording error:", e);
+        }
+    };
 
 
     // ✅ COMPLETELY REWRITTEN VIDEO SAVE FUNCTION
@@ -458,42 +458,38 @@ const stopRecording = async () => {
         try {
             setIsSaving(true);
 
-            // 🔥 Capture filtered image
+            // 🔥 capture filtered image
             const localUri = await viewShotRef.current.capture();
 
-            // 🔥 SAVE FILTERED IMAGE TO GALLERY (THIS WAS MISSING)
+            // 🔥 save to gallery
             await CameraRoll.save(localUri, { type: "photo" });
 
-            // ---- EXISTING CODE BELOW (UNCHANGED) ----
+            // 🔥 SAVE INTO HIVE (LOCAL)
+            const stored = await AsyncStorage.getItem("HIVES");
+            let hives = stored ? JSON.parse(stored) : [];
 
-            const token = await AsyncStorage.getItem("token");
-            const storedUser = await AsyncStorage.getItem("user");
+            const newImage = {
+                url: localUri,
+                type: "image",
+                blurred: false,
+            };
 
-            if (!token || !storedUser) return;
+            hives = hives.map(h => {
+                if (h.id !== hiveId) return h;
 
-            const userId = JSON.parse(storedUser)._id;
+                return {
+                    ...h,
+                    images: [...(h.images || []), newImage],
+                };
+            });
 
-            const imageUrl = await uploadImageToFirebase(
-                { uri: localUri },
-                userId,
-                hiveId
-            );
-
-            await axios.post(
-                `https://snaphive-node.vercel.app/api/hives/${hiveId}/images`,
-                { images: [imageUrl] },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
 
             navigation.goBack();
 
         } catch (e) {
-            console.log("camera upload error", e);
-            Alert.alert("Upload Error", "Failed to upload photo");
+            console.log("photo save error", e);
+            Alert.alert("Error", "Failed to save photo");
         } finally {
             setIsSaving(false);
         }
@@ -505,66 +501,56 @@ const stopRecording = async () => {
         try {
             setIsSaving(true);
 
-            const token = await AsyncStorage.getItem("token");
-            const storedUser = await AsyncStorage.getItem("user");
-            if (!token || !storedUser) throw new Error("Auth missing");
-
-            const parsedUser = JSON.parse(storedUser);
-            const userId = parsedUser._id || parsedUser.id;
-            if (!userId) throw new Error("User ID missing");
-
-            console.log("USER ID:", userId);
-            console.log("HIVE ID:", hiveId);
-
             let localUri;
 
-            // 📸 PHOTO FLOW
+            // 📸 PHOTO
             if (!videoPath) {
-                // capture filtered photo
                 localUri = await viewShotRef.current.capture();
-
-                // save to gallery
                 await CameraRoll.save(localUri, { type: "photo" });
             }
 
-            // 🎥 VIDEO FLOW
-            const uploadResult = await uploadImageToFirebase(
-                { uri: videoPath || localUri },
-                userId,
-                hiveId
-            );
+            // 🎥 VIDEO
+            const mediaUri = videoPath || localUri;
 
-            // ✅ ALWAYS extract string URL
-            const mediaUrl =
-                typeof uploadResult === "string"
-                    ? uploadResult
-                    : uploadResult.url;
+            const stored = await AsyncStorage.getItem("HIVES");
+            let hives = stored ? JSON.parse(stored) : [];
 
-            const payload = videoPath
-                ? {
-                    videos: [
-                        {
-                            url: mediaUrl,
-                            thumbnail: null,
-                        },
-                    ],
+            hives = hives.map(h => {
+                if (h.id !== hiveId) return h;
+
+                if (videoPath) {
+                    return {
+                        ...h,
+                        videos: [
+                            ...(h.videos || []),
+                            {
+                                url: mediaUri,
+                                thumbnail: null,
+                            },
+                        ],
+                    };
+                } else {
+                    return {
+                        ...h,
+                        images: [
+                            ...(h.images || []),
+                            {
+                                url: mediaUri,
+                                type: "image",
+                                blurred: false,
+                            },
+                        ],
+                    };
                 }
-                : {
-                    images: [mediaUrl],
-                };
+            });
 
-            await axios.post(
-                `https://snaphive-node.vercel.app/api/hives/${hiveId}/images`,
-                payload,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+            await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
 
             navigation.goBack();
+
         } catch (err) {
-            console.log("Upload error:", err?.response?.data || err.message);
-            Alert.alert("Upload Failed", "Failed to upload media");
+            console.log("Save error:", err);
+            Alert.alert("Error", "Failed to save media");
         } finally {
             setIsSaving(false);
         }
@@ -603,11 +589,11 @@ const stopRecording = async () => {
         }
     };
     // ⏱ Auto stop recording at 10 seconds
-useEffect(() => {
-    if (isRecording && recordSeconds >= 10) {
-        stopRecording();
-    }
-}, [recordSeconds]);
+    useEffect(() => {
+        if (isRecording && recordSeconds >= 10) {
+            stopRecording();
+        }
+    }, [recordSeconds]);
 
     if (!hasPermission || !hasMicPermission) {
 

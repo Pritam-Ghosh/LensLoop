@@ -23,7 +23,7 @@ import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 import AppModal from "../components/AppModal";
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { uploadImageToFirebase } from '../utils/firebaseUpload';
+
 
 // assets
 const hero = require('../../assets/hero.png');
@@ -69,41 +69,30 @@ const EditHive = ({ navigation, route }) => {
     ];
 
 
-    const fetchHive = async () => {
+const fetchHive = async () => {
     try {
-        const token = await AsyncStorage.getItem("token");
+        const stored = await AsyncStorage.getItem("HIVES");
+        const hives = stored ? JSON.parse(stored) : [];
 
-        const res = await fetch(
-            `https://snaphive-node.vercel.app/api/hives/${hiveId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+        const hive = hives.find(h => h.id === hiveId);
 
-        const data = await res.json();
+        if (!hive) return;
 
-        if (data.success) {
-            const hive = data.data;
+        setHiveName(hive.hiveName || "");
+        setHiveDescription(hive.description || "");
+        setUploadType(hive.privacyMode || "automatic");
 
-            setHiveName(hive.hiveName || "");
-            setHiveDescription(hive.description || "");
-            setUploadType(hive.privacyMode || "automatic");
-
-            if (hive.coverImage) {
-                setSelectedStockImage(hive.coverImage);
-            }
-
-            if (hive.eventDate) setStartDate(new Date(hive.eventDate));
-            if (hive.expiryDate) setEndDate(new Date(hive.expiryDate));
+        if (hive.coverImage) {
+            setSelectedStockImage(hive.coverImage);
         }
 
+        if (hive.eventDate) setStartDate(new Date(hive.eventDate));
+        if (hive.expiryDate) setEndDate(new Date(hive.expiryDate));
+
     } catch (err) {
-        console.log("Fetch hive error:", err);
+        console.log("Local fetch error:", err);
     }
 };
-
 useEffect(() => {
     if (hiveId) {
         fetchHive();
@@ -210,39 +199,28 @@ useEffect(() => {
         !checked;
 const handleEditHive = async () => {
     try {
-
         showLoader();
 
-        const token = await AsyncStorage.getItem("token");
+        const stored = await AsyncStorage.getItem("HIVES");
+        let hives = stored ? JSON.parse(stored) : [];
 
-        let coverImageUrl = selectedStockImage;
+        hives = hives.map(h => {
+            if (h.id !== hiveId) return h;
 
-        const payload = {
-            hiveName,
-            description: hiveDescription,
-            privacyMode: uploadType,
-            eventDate: isEnabled ? formatAPIDate(startDate) : "",
-            startTime: isEnabled ? formatAPITime(startTime) : "",
-            endTime: isEnabled ? formatAPITime(endTime) : "",
-            expiryDate: isEnabled ? formatAPIDate(endDate) : "",
-            coverImage: coverImageUrl,
-        };
+            return {
+                ...h,
+                hiveName,
+                description: hiveDescription,
+                privacyMode: uploadType,
+                eventDate: isEnabled ? formatAPIDate(startDate) : "",
+                startTime: isEnabled ? formatAPITime(startTime) : "",
+                endTime: isEnabled ? formatAPITime(endTime) : "",
+                expiryDate: isEnabled ? formatAPIDate(endDate) : "",
+                coverImage: uploadedImage?.uri || selectedStockImage,
+            };
+        });
 
-        const res = await fetch(
-            `https://snaphive-node.vercel.app/api/hives/${hiveId}`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            }
-        );
-
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.message);
+        await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
 
         Toast.show({
             type: "success",
@@ -252,13 +230,11 @@ const handleEditHive = async () => {
         navigation.goBack();
 
     } catch (err) {
-
         Toast.show({
             type: "error",
             text1: "Update failed",
-            text2: err.message,
+            text2: "Something went wrong",
         });
-
     } finally {
         hideLoader();
     }
@@ -323,24 +299,15 @@ const handleEditHive = async () => {
 
 
 
-    useFocusEffect(
-        React.useCallback(() => {
-            const fetchStockImages = async () => {
-                try {
-                    const res = await fetch("https://snaphive-node.vercel.app/api/stock-images");
-                    const data = await res.json();
-
-                    if (data.success) {
-                        setStockImages(data.images);
-                    }
-                } catch (err) {
-                    console.log(err);
-                }
-            };
-
-            fetchStockImages();
-        }, [])
-    );
+   useEffect(() => {
+    setStockImages([
+        { category: "corporate", file: "https://picsum.photos/200?1" },
+        { category: "event", file: "https://picsum.photos/200?2" },
+        { category: "people", file: "https://picsum.photos/200?3" },
+        { category: "nature", file: "https://picsum.photos/200?4" },
+        { category: "other", file: "https://picsum.photos/200?5" },
+    ]);
+}, []);
 
 
 

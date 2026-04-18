@@ -45,64 +45,58 @@ const OTP = ({ navigation, route }) => {
       inputRefs.current[index - 1]?.focus();
     }
   };
-  const handleVerify = async () => {
-    const finalOtp = otp.join('');
+const handleVerify = async () => {
+  const finalOtp = otp.join('');
 
-    if (finalOtp.length < 6) {
-      showModal({
-        title: "Invalid Code",
-        message: "Please enter the complete 6-digit OTP",
-        type: "warning",
-      });
-      return;
-    }
-    showLoader();
+  if (finalOtp.length < 6) {
+    showModal({
+      title: "Invalid Code",
+      message: "Please enter the complete 6-digit OTP",
+      type: "warning",
+    });
+    return;
+  }
 
-    try {
-      const res = await verifyOtp({
-        email: email || null,
-        phone: formattedPhone || null,
-        otp: finalOtp,
-      });
-      console.log("OTP Verify Response:", res.data);
+  showLoader();
 
-      if (res?.data?.message) {
-        await AsyncStorage.setItem('token', res.data.token);
-        await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
+  try {
+    // 🔥 simulate delay like API
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
-        hideLoader();
+    // 🔥 get existing user (from Signup)
+    const storedUser = await AsyncStorage.getItem("user");
+    const user = storedUser ? JSON.parse(storedUser) : null;
 
-        Toast.show({
-          type: "success",
-          text1: "Verified 🎉",
-          text2: res.data.message || "OTP verified successfully",
-        });
+    if (!user) throw new Error("User not found");
 
-        setTimeout(() => {
-          navigation.navigate("MyTabs");
-        }, 500);
+    // 🔥 fake token
+    const fakeToken = "demo_token_" + Date.now();
 
-      } else {
-        hideLoader();
-        showModal({
-          title: "Verification Failed",
-          message: "Unexpected response from server",
-          type: "error",
-        });
+    await AsyncStorage.setItem("token", fakeToken);
+    await AsyncStorage.setItem("user", JSON.stringify(user));
 
-      }
-    } catch (err) {
-      hideLoader(); // ✅ VERY IMPORTANT
+    hideLoader();
 
-      console.log('OTP Verify Error:', err.response?.data || err.message);
-      showModal({
-        title: "Verification Failed",
-        message: err.response?.data?.message || "Something went wrong",
-        type: "error",
-      });
+    Toast.show({
+      type: "success",
+      text1: "Verified 🎉",
+      text2: "OTP verified successfully",
+    });
 
-    }
-  };
+    setTimeout(() => {
+      navigation.replace("MyTabs");
+    }, 500);
+
+  } catch (err) {
+    hideLoader();
+
+    showModal({
+      title: "Verification Failed",
+      message: "Something went wrong",
+      type: "error",
+    });
+  }
+};
 
 
   return (
@@ -150,26 +144,12 @@ const OTP = ({ navigation, route }) => {
           <View style={styles.resendRow}>
             <CustomText weight="medium">Didn’t receive a code? </CustomText>
             <TouchableWithoutFeedback onPress={async () => {
-              try {
-                const { data } = await resendOtp({
-                  email: email || null,
-                  phone: formattedPhone || null
-                });
-                Toast.show({
-                  type: "success",
-                  text1: "OTP Sent",
-                  text2: data.message,
-                });
-
-              } catch (err) {
-                showModal({
-                  title: "Resend Failed",
-                  message: err.response?.data?.message || "Failed to resend OTP",
-                  type: "error",
-                });
-
-              }
-            }}>
+  Toast.show({
+    type: "success",
+    text1: "OTP Sent",
+    text2: "New OTP sent successfully",
+  });
+}}>
               <View>
                 <CustomText weight="Bold" style={[styles.continueTxt, { fontWeight: 600 }]}>
                   Resend

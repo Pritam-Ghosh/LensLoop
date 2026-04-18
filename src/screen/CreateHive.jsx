@@ -23,7 +23,7 @@ import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 import AppModal from "../components/AppModal";
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { uploadImageToFirebase } from '../utils/firebaseUpload';
+
 
 // assets
 const hero = require('../../assets/hero.png');
@@ -60,6 +60,9 @@ const CreateHive = ({ navigation, route }) => {
     const [openEndTime, setOpenEndTime] = useState(false);
     const [openEndDate, setOpenEndDate] = useState(false);
     const [stockImages, setStockImages] = useState([]);
+
+    const incomingPhotos = route.params?.photos || [];
+
 
     const categories = [
         { key: "corporate", label: t("corporate") },
@@ -175,41 +178,42 @@ const CreateHive = ({ navigation, route }) => {
         // !selectedOption ||                  // Messaging settings
         !checked;
     // Privacy policy
-    const uploadAutoSyncPhotos = async (hiveId) => {
-        const storedPhotos = await AsyncStorage.getItem("AUTO_SYNC_PHOTOS");
-        if (!storedPhotos) return;
+    // const uploadAutoSyncPhotos = async (hiveId) => {
+    //     const storedPhotos = await AsyncStorage.getItem("AUTO_SYNC_PHOTOS");
+    //     if (!storedPhotos) return;
 
-        const photos = JSON.parse(storedPhotos).slice(0, 20);
-        const userId = await AsyncStorage.getItem("userId");
-        const token = await AsyncStorage.getItem("token");
+    //     const photos = JSON.parse(storedPhotos).slice(0, 20);
+    //     const userId = await AsyncStorage.getItem("userId");
+    //     const token = await AsyncStorage.getItem("token");
 
-        const uploadedUrls = [];
+    //     const uploadedUrls = [];
 
-        for (const photo of photos) {
-            try {
-                const url = await uploadImageToFirebase(photo, userId, hiveId);
-                uploadedUrls.push(url);
-            } catch (error) {
-                console.log("❌ AutoSync upload failed:", error);
-            }
-        }
+    //     for (const photo of photos) {
+    //         try {
+    //             const url = await uploadImageToFirebase(photo, userId, hiveId);
+    //             uploadedUrls.push(url);
+    //         } catch (error) {
+    //             console.log("❌ AutoSync upload failed:", error);
+    //         }
+    //     }
 
-        await fetch(
-            `https://snaphive-node.vercel.app/api/hives/${hiveId}/images`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ images: uploadedUrls }),
-            }
-        );
+    //     await fetch(
+    //         `https://snaphive-node.vercel.app/api/hives/${hiveId}/images`,
+    //         {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //                 Authorization: `Bearer ${token}`,
+    //             },
+    //             body: JSON.stringify({ images: uploadedUrls }),
+    //         }
+    //     );
 
-        await AsyncStorage.removeItem("AUTO_SYNC_PHOTOS");
-    };
+    //     await AsyncStorage.removeItem("AUTO_SYNC_PHOTOS");
+    // };
 
     const handleCreateHive = async () => {
+
         try {
             if (isCreateDisabled) {
                 Toast.show({
@@ -222,54 +226,43 @@ const CreateHive = ({ navigation, route }) => {
 
             showLoader();
 
-            const userId = await AsyncStorage.getItem("userId");
-            const token = await AsyncStorage.getItem("token");
 
-            let coverImageUrl = null;
+            // 📦 Create local hive object
+    // ✅ FIRST
+const newImages = incomingPhotos.map(p => ({
+  url: p.uri,
+  type: "image",
+  blurred: false,
+}));
 
-            // ✅ UPLOAD COVER IMAGE
-            if (uploadedImage) {
-                coverImageUrl = await uploadImageToFirebase(
-                    uploadedImage, // MUST be full image object
-                    userId,
-                    "cover"
-                );
-            } else if (selectedStockImage) {
-                coverImageUrl = selectedStockImage;
-            }
+// ✅ THEN
+const newHive = {
+  id: Date.now().toString(),
+  hiveName,
+  description: hiveDescription || "No description",
+  privacyMode: hiveType,
+  isTemporary: isEnabled,
+  eventDate: isEnabled ? formatAPIDate(startDate) : "",
+  startTime: isEnabled ? formatAPITime(startTime) : "",
+  endTime: isEnabled ? formatAPITime(endTime) : "",
+  expiryDate: isEnabled ? formatAPIDate(endDate) : "",
+  coverImage: uploadedImage?.uri || selectedStockImage,
+  createdAt: new Date(),
 
+  images: newImages, // ✅ now valid
 
-            const payload = {
-                hiveName,
-                description: hiveDescription || "No description",
-                privacyMode: hiveType,
-                isTemporary: isEnabled,
-                eventDate: isEnabled ? formatAPIDate(startDate) : "",
-                startTime: isEnabled ? formatAPITime(startTime) : "",
-                endTime: isEnabled ? formatAPITime(endTime) : "",
-                expiryDate: isEnabled ? formatAPIDate(endDate) : "",
-                coverImage: coverImageUrl,
-            };
+  videos: [],
+  likes: [],
+  comments: [],
+  members: [],
+};
 
-            const response = await fetch(
-                "https://snaphive-node.vercel.app/api/hives",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(payload),
-                }
-            );
+            // 💾 Save locally
+            const existing = await AsyncStorage.getItem("HIVES");
+            const hives = existing ? JSON.parse(existing) : [];
+            hives.push(newHive);
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to create hive");
-            }
-
-            const hiveId = result.data._id;
+            await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
 
             Toast.show({
                 type: "success",
@@ -279,17 +272,11 @@ const CreateHive = ({ navigation, route }) => {
 
             navigation.navigate("HomeScreen", { showCreateToast: true });
 
-            // 🔁 AutoSync uploads (non-blocking)
-            uploadAutoSyncPhotos(hiveId).catch(err => {
-                console.log("AutoSync upload failed:", err);
-            });
-
         } catch (error) {
-            console.error("Create Hive Error:", error);
             Toast.show({
                 type: "error",
                 text1: t('somethingWentWrong'),
-                text2: error.message || t('somethingWentWrong'),
+                text2: error.message,
             });
         } finally {
             hideLoader();
@@ -355,25 +342,17 @@ const CreateHive = ({ navigation, route }) => {
 
 
 
-    useFocusEffect(
-        React.useCallback(() => {
-            const fetchStockImages = async () => {
-                try {
-                    const res = await fetch("https://snaphive-node.vercel.app/api/stock-images");
-                    const data = await res.json();
+    useEffect(() => {
+        const mockImages = [
+            { category: "corporate", file: "https://picsum.photos/300/300?1" },
+            { category: "event", file: "https://picsum.photos/300/300?2" },
+            { category: "people", file: "https://picsum.photos/300/300?3" },
+            { category: "nature", file: "https://picsum.photos/300/300?4" },
+            { category: "other", file: "https://picsum.photos/300/300?5" },
+        ];
 
-                    if (data.success) {
-                        setStockImages(data.images);
-                    }
-                } catch (err) {
-                    console.log(err);
-                }
-            };
-
-            fetchStockImages();
-        }, [])
-    );
-
+        setStockImages(mockImages);
+    }, []);
 
 
     const getImageByCategory = (categoryKey) => {

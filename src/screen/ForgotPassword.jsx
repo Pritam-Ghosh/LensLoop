@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, TouchableWithoutFeedback, SafeAreaView, Pressable, ScrollView, } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from 'react-native-toast-message';
+import { ChevronLeft } from 'lucide-react-native';
+
+// component
 import Logo from '../components/Logo';
 import ThemeButton from '../components/ThemeButton';
 import CustomText from '../components/CustomText';
-import { forgotpassword } from '../API/API';
-import Toast from 'react-native-toast-message';
-import { ChevronLeft } from 'lucide-react-native';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
+
 const Login = ({ navigation }) => {
   const [userID, setUserID] = useState('');
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -22,11 +25,20 @@ const Login = ({ navigation }) => {
     }
 
     try {
-      const { data } = await forgotpassword({ email: userID });
+      // 🔥 fake delay like API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 🔥 generate fake OTP
+      const fakeOTP = "1234";
+
+      // 💾 store locally
+      await AsyncStorage.setItem("RESET_EMAIL", userID);
+      await AsyncStorage.setItem("RESET_OTP", fakeOTP);
 
       Toast.show({
         type: 'success',
         text1: 'OTP Sent',
+        text2: 'Use 1234 as OTP',
         visibilityTime: 2000,
       });
 
@@ -36,7 +48,7 @@ const Login = ({ navigation }) => {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: err.response?.data?.message || 'Something went wrong',
+        text2: 'Something went wrong',
       });
     }
   };

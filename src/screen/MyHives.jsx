@@ -61,13 +61,25 @@ const MyHives = ({ navigation, route }) => {
     const [user, setUser] = useState(null);
 
     const [refreshing, setRefreshing] = useState(false);
-    const { hives, fetchHives, deleteHive } = useContext(EventContext);
+    const { hives, setHives } = useContext(EventContext);
     const { t, i18n } = useTranslation();
     const [searchText, setSearchText] = useState("");
     const [loggedUser, setLoggedUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
 
+
+
+    const fetchHives = async () => {
+        try {
+            const stored = await AsyncStorage.getItem("HIVES");
+            const localHives = stored ? JSON.parse(stored) : [];
+
+            setHives(localHives);
+        } catch (e) {
+            console.log("Local fetch error:", e);
+        }
+    };
 
 
 
@@ -141,26 +153,22 @@ const MyHives = ({ navigation, route }) => {
         }, [])
     );
 
-    const handleDeleteHive = (hiveId) => {
-        Alert.alert(
-            "Delete Hive",
-            "Are you sure? This will permanently delete this hive and all images.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await deleteHive(hiveId); // ✅ context delete
-                        } catch (error) {
-                            console.log("Delete hive error:", error);
-                            Alert.alert("Alert", "member cant delete this hive");
-                        }
-                    },
-                },
-            ]
-        );
+    const handleDeleteHive = async (hiveId) => {
+
+        try {
+            const stored = await AsyncStorage.getItem("HIVES");
+            let hives = stored ? JSON.parse(stored) : [];
+
+            hives = hives.filter(h => h.id !== hiveId);
+
+            await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
+
+            setHives(hives);
+
+        } catch (error) {
+            console.log("Delete error:", error);
+
+        };
     };
     useEffect(() => {
         const loadUser = async () => {
@@ -212,217 +220,217 @@ const MyHives = ({ navigation, route }) => {
     return (
         <BackgroundUI>
 
-                <TopNav />
-                <ScrollView
-                    style={styles.container}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                        />
-                    }>
-                    {/* Header Section */}
+            <TopNav />
+            <ScrollView
+                style={styles.container}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />
+                }>
+                {/* Header Section */}
 
-                    <View style={styles.headerSection}>
-                        <CustomText weight="semiBold" style={{ marginBottom: 10, fontSize: 22}}> {getGreeting()}!</CustomText>
+                <View style={styles.headerSection}>
+                    <CustomText weight="semiBold" style={{ marginBottom: 10, fontSize: 22 }}> {getGreeting()}!</CustomText>
 
-                        <CustomText style={styles.subtitle}>
-                            {t('allSharedMemories')}
-                        </CustomText>
-                        <View
-                            style={{
-                                position: "relative",
-                                flexDirection: "row",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 8,
-                            }}
-                        >
+                    <CustomText style={styles.subtitle}>
+                        {t('allSharedMemories')}
+                    </CustomText>
+                    <View
+                        style={{
+                            position: "relative",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 8,
+                        }}
+                    >
 
-                            <View style={styles.searchWrapper}>
+                        <View style={styles.searchWrapper}>
 
-                                {/* Search Input */}
-                                <View style={styles.searchInputContainer}>
+                            {/* Search Input */}
+                            <View style={styles.searchInputContainer}>
 
-                                    <TextInput
-                                        value={searchText}
-                                        onChangeText={setSearchText}
-                                        placeholder={t("searchHive")}
-                                        placeholderTextColor="#9CA3AF"
-                                        style={styles.searchInput}
-                                    />
+                                <TextInput
+                                    value={searchText}
+                                    onChangeText={setSearchText}
+                                    placeholder={t("searchHive")}
+                                    placeholderTextColor="#9CA3AF"
+                                    style={styles.searchInput}
+                                />
 
-                                    {/* Search Icon */}
-                                    <Search
-                                        size={26}
-                                        color="#6B7280"
-                                        style={{ marginRight: 0 }}
-                                    />
-
-                                </View>
-
-                                {/* Plus Button Attached */}
-                                <TouchableOpacity
-                                    onPress={() => navigation.navigate('CreateHive')}
-                                    activeOpacity={0.8}
-                                    style={styles.plusButton}
-                                >
-                                    <Plus size={26} color="#fff" />
-                                </TouchableOpacity>
+                                {/* Search Icon */}
+                                <Search
+                                    size={26}
+                                    color="#6B7280"
+                                    style={{ marginRight: 0 }}
+                                />
 
                             </View>
 
-
+                            {/* Plus Button Attached */}
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('CreateHive')}
+                                activeOpacity={0.8}
+                                style={styles.plusButton}
+                            >
+                                <Plus size={26} color="#fff" />
+                            </TouchableOpacity>
 
                         </View>
+
+
+
                     </View>
+                </View>
 
-                    {/* Example Event Row */}
 
-                    {/* Event Row Section */}
-                    <View style={{ paddingBottom: 100 }}>
 
-                        <CustomText weight="bold" style={styles.title}>{t('myHives')}</CustomText>
-                        {loading ? (
-                            <View style={{ marginTop: 100, alignItems: "center", justifyContent: 'center' }}>
-                                <ActivityIndicator size="large" color={colors.primary} />
-                            </View>
-                        ) : filteredHives.length > 0 ? (
-                            filteredHives.map((item, index) => (
-                                <TouchableWithoutFeedback
-                                    key={index}
-                                    onPress={() =>
-                                        navigation.navigate("FolderLayout", {
-                                            image: { uri: item.coverImage },
-                                            folderName: item.hiveName,
-                                            hiveId: item._id,
-                                            date: item.createdAt,
-                                            owner: item.ownerName,
-                                            eventDescription: item.description,
-                                            photos: item.photos || [],
-                                        })
-                                    }
+                {/* Event Row Section */}
+                <View style={{ paddingBottom: 100 }}>
+
+                    <CustomText weight="bold" style={styles.title}>{t('myHives')}</CustomText>
+                    {loading ? (
+                        <View style={{ marginTop: 100, alignItems: "center", justifyContent: 'center' }}>
+                            <ActivityIndicator size="large" color={colors.primary} />
+                        </View>
+                    ) : filteredHives.length > 0 ? (
+                        filteredHives.map((item, index) => (
+                            <TouchableWithoutFeedback
+                                key={index}
+                                onPress={() =>
+                                    navigation.navigate("FolderLayout", {
+                                        image: { uri: item.coverImage },
+                                        folderName: item.hiveName,
+                                        hiveId: item._id,
+                                        date: item.createdAt,
+                                        owner: item.ownerName,
+                                        eventDescription: item.description,
+                                        photos: item.photos || [],
+                                    })
+                                }
+                            >
+                                <ImageBackground
+                                    source={{ uri: item.coverImage }}
+                                    style={styles.eventImg}
+                                    imageStyle={{ borderRadius: 14 }}
                                 >
-                                    <ImageBackground
-                                        source={{ uri: item.coverImage }}
-                                        style={styles.eventImg}
-                                        imageStyle={{ borderRadius: 14 }}
-                                    >
-                                        <View style={{ flex: 1, justifyContent: "space-between", padding: 10, paddingLeft: 15 }}>
+                                    <View style={{ flex: 1, justifyContent: "space-between", padding: 10, paddingLeft: 15 }}>
 
-                                            <View>
-                                                <CustomText weight="bold" style={[styles.eventTitle, { color: "#fff" }]}>
-                                                    {item.hiveName}
-                                                </CustomText>
+                                        <View>
+                                            <CustomText weight="bold" style={[styles.eventTitle, { color: "#fff" }]}>
+                                                {item.hiveName}
+                                            </CustomText>
 
-                                                <CustomText weight="medium" style={[styles.mtop, { color: "#fff" }]}>
-                                                    {item.description || "No description"}
+                                            <CustomText weight="medium" style={[styles.mtop, { color: "#fff" }]}>
+                                                {item.description || "No description"}
+                                            </CustomText>
+                                        </View>
+
+                                        <View style={{ flexDirection: "row", gap: 20 }}>
+                                            <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+                                                <Users width={14} height={14} color="#fff" />
+                                                <CustomText style={{ color: "#fff" }}>
+                                                    {getHiveMembersCount(item)}
                                                 </CustomText>
                                             </View>
 
-                                            <View style={{ flexDirection: "row", gap: 20 }}>
-                                                <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-                                                    <Users width={14} height={14} color="#fff" />
-                                                    <CustomText style={{ color: "#fff" }}>
-                                                        {getHiveMembersCount(item)}
-                                                    </CustomText>
+                                            <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+                                                <FileImage width={14} height={14} color="#fff" />
+                                                <CustomText style={{ color: "#fff" }}>
+                                                    {getHivePhotos(item).length}
+                                                </CustomText>
+                                            </View>
+                                            <TouchableOpacity
+                                                onPress={() =>
+                                                    navigation.navigate("FolderLayout", {
+                                                        image: { uri: item.coverImage },
+                                                        folderName: item.hiveName,
+                                                        date: item.createdAt,
+                                                        hiveId: item._id,
+                                                        owner: item.user?.name,
+                                                        photos: item.images || [],
+                                                        eventTitle: item.hiveName,
+                                                        eventDescription: item.description,
+                                                        eventEndTime: item.endTime,
+                                                        eventExpiryDate: item.expiryDate,
+                                                        membersCount: item.members?.length || 0,
+                                                    })
+                                                } style={{ position: 'absolute', right: 4, bottom: 4 }}>
+                                                <View style={{ backgroundColor: '#ffffffa6', justifyContent: "center", alignItems: "center", borderRadius: 50, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4 }}>
+                                                    <CustomText weight="semiBold" style={{ color: "#000000" }}>Open Hive </CustomText>
                                                 </View>
+                                            </TouchableOpacity>
 
-                                                <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-                                                    <FileImage width={14} height={14} color="#fff" />
-                                                    <CustomText style={{ color: "#fff" }}>
-                                                        {getHivePhotos(item).length}
-                                                    </CustomText>
-                                                </View>
+                                            {!isHiveMember(item) && (
                                                 <TouchableOpacity
-                                                    onPress={() =>
-                                                        navigation.navigate("FolderLayout", {
-                                                            image: { uri: item.coverImage },
-                                                            folderName: item.hiveName,
-                                                            date: item.createdAt,
-                                                            hiveId: item._id,
-                                                            owner: item.user?.name,
-                                                            photos: item.images || [],
-                                                            eventTitle: item.hiveName,
-                                                            eventDescription: item.description,
-                                                            eventEndTime: item.endTime,
-                                                            eventExpiryDate: item.expiryDate,
-                                                            membersCount: item.members?.length || 0,
-                                                        })
-                                                    } style={{ position: 'absolute', right: 4, bottom: 4 }}>
-                                                    <View style={{ backgroundColor: '#ffffffa6', justifyContent: "center", alignItems: "center", borderRadius: 50, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4 }}>
-                                                        <CustomText weight="semiBold" style={{ color: "#000000" }}>Open Hive </CustomText>
+                                                    onPress={() => handleDeleteHive(item.id)}
+                                                    style={{ position: 'absolute', right: 4, bottom: 70 }}
+                                                >
+                                                    <View style={{ width: 30, height: 30, backgroundColor: '#d30e0ea6', justifyContent: "center", alignItems: "center", borderRadius: 50 }}>
+                                                        <Trash2 size={18} color="#fff" />
                                                     </View>
                                                 </TouchableOpacity>
-
-                                                {!isHiveMember(item) && (
-                                                    <TouchableOpacity
-                                                        onPress={() => handleDeleteHive(item._id)}
-                                                        style={{ position: 'absolute', right: 4, bottom: 70 }}
-                                                    >
-                                                        <View style={{ width: 30, height: 30, backgroundColor: '#d30e0ea6', justifyContent: "center", alignItems: "center", borderRadius: 50 }}>
-                                                            <Trash2 size={18} color="#fff" />
-                                                        </View>
-                                                    </TouchableOpacity>
-                                                )}
-                                            </View>
-
+                                            )}
                                         </View>
-                                    </ImageBackground>
-                                </TouchableWithoutFeedback>
-                            ))
-                        ) : (
 
+                                    </View>
+                                </ImageBackground>
+                            </TouchableWithoutFeedback>
+                        ))
+                    ) : (
+
+                        <View
+                            style={{
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 10,
+                                marginTop: 60,
+                                marginBottom: 80,
+                            }}
+                        >
                             <View
                                 style={{
+                                    width: 60,
+                                    height: 60,
+                                    backgroundColor: '#c2beffff',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: 10,
-                                    marginTop: 60,
-                                    marginBottom: 80,
+                                    borderRadius: 50,
                                 }}
                             >
+                                <ImagePlus color="#fff" size={28} />
+                            </View>
+
+                            <CustomText weight="medium" style={{ color: '#da3c84' }}>
+                                {t('noHivesYet')}
+                            </CustomText>
+                            <TouchableOpacity onPress={() => navigation.navigate('CreateHive')}>
                                 <View
                                     style={{
-                                        width: 60,
-                                        height: 60,
-                                        backgroundColor: '#c2beffff',
+                                        flexDirection: 'row',
                                         alignItems: 'center',
-                                        justifyContent: 'center',
-                                        borderRadius: 50,
+                                        gap: 6,
+                                        backgroundColor: '#f7a481',
+                                        padding: 15,
+                                        borderRadius: 12,
+                                        marginTop: 8,
                                     }}
                                 >
-                                    <ImagePlus color="#fff" size={28} />
+                                    <CustomText weight="bold" style={{ color: '#ffffff' }}>
+                                        {t('createYourFirstHive')}
+                                    </CustomText>
+                                    <CirclePlus color="#ffffff" />
                                 </View>
-
-                                <CustomText weight="medium" style={{ color: '#da3c84' }}>
-                                    {t('noHivesYet')}
-                                </CustomText>
-                                <TouchableOpacity onPress={() => navigation.navigate('CreateHive')}>
-                                    <View
-                                        style={{
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            gap: 6,
-                                            backgroundColor: '#f7a481',
-                                            padding: 15,
-                                            borderRadius: 12,
-                                            marginTop: 8,
-                                        }}
-                                    >
-                                        <CustomText weight="bold" style={{ color: '#ffffff' }}>
-                                            {t('createYourFirstHive')}
-                                        </CustomText>
-                                        <CirclePlus color="#ffffff" />
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </View>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
 
 
-                </ScrollView>
+            </ScrollView>
 
         </BackgroundUI >
     );
@@ -448,7 +456,7 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 14,
         color: '#6B7280',
-    
+
     },
     searchWrapper: {
         flexDirection: "row",
@@ -476,15 +484,15 @@ const styles = StyleSheet.create({
     },
 
     plusButton: {
- backgroundColor: 'rgba(243, 92, 142, 0.9)',
+        backgroundColor: 'rgba(243, 92, 142, 0.9)',
         paddingHorizontal: 20,
         paddingBlock: 10,
         borderRadius: 25,
         alignItems: "center",
         justifyContent: "center",
         marginLeft: 6,
-            borderWidth: 1,
-    borderColor: '#ffffff',
+        borderWidth: 1,
+        borderColor: '#ffffff',
     },
     eventRow: {
         flexDirection: 'row',

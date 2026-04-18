@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+
 import Clipboard from "@react-native-clipboard/clipboard";
 import { View, TextInput, StyleSheet, Text, TouchableOpacity, Image, ScrollView, Dimensions, KeyboardAvoidingView } from "react-native";
 import QR from "../../assets/svg/qr.svg";
@@ -40,7 +40,7 @@ const InviteMember = ({ navigation, route }) => {
   const [copied, setCopied] = useState(false);
   const [triggerInvite, setTriggerInvite] = useState(false);
   const [phone, setPhone] = useState("");
-  const inviteLink = `https://snaphive-node.vercel.app/api/hives/${hiveId}/join`;
+const inviteLink = `snaphive://hive/${hiveId}`;
 
 
   const scrollRef = useRef(null);
@@ -70,84 +70,107 @@ const InviteMember = ({ navigation, route }) => {
   // -------------------------------
   // USE EFFECT FOR INVITATION API
   // -------------------------------
-  useEffect(() => {
-    if (!triggerInvite) return;
+  // useEffect(() => {
+  //   if (!triggerInvite) return;
 
-    const inviteMember = async () => {
-      showLoader();
+  //   const inviteMember = async () => {
+  //     showLoader();
 
-      try {
-        const token = await AsyncStorage.getItem("token");
+  //     try {
+  //       const token = await AsyncStorage.getItem("token");
 
-        if (!token) {
-          Toast.show({
-            type: 'error',
-            text1: 'Session Expired',
-            text2: 'Please log in again',
-          });
-          return;
-        }
+  //       if (!token) {
+  //         Toast.show({
+  //           type: 'error',
+  //           text1: 'Session Expired',
+  //           text2: 'Please log in again',
+  //         });
+  //         return;
+  //       }
 
-        const response = await axios.post(
-          `https://snaphive-node.vercel.app/api/hives/${hiveId}/invite`,
-          {
-            email: email || null,
-            phone: phone ? `+91${phone}` : null
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+  //       const response = await axios.post(
+  //         `https://snaphive-node.vercel.app/api/hives/${hiveId}/invite`,
+  //         {
+  //           email: email || null,
+  //           phone: phone ? `+91${phone}` : null
+  //         },
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       );
 
-        Toast.show({
-          type: 'success',
-          text1: 'Invitation Sent',
-          text2: 'Member invited successfully',
-        });
+  //       Toast.show({
+  //         type: 'success',
+  //         text1: 'Invitation Sent',
+  //         text2: 'Member invited successfully',
+  //       });
 
-        setEmail("");
-        setPhone("");
+  //       setEmail("");
+  //       setPhone("");
 
-      } catch (error) {
-        Toast.show({
-          type: 'error',
-          text1: 'Invite Failed',
-          text2: error.response?.data?.message || 'Failed to send invitation',
-        });
-      } finally {
-        hideLoader();
-        setTriggerInvite(false);
-      }
-    };
+  //     } catch (error) {
+  //       Toast.show({
+  //         type: 'error',
+  //         text1: 'Invite Failed',
+  //         text2: error.response?.data?.message || 'Failed to send invitation',
+  //       });
+  //     } finally {
+  //       hideLoader();
+  //       setTriggerInvite(false);
+  //     }
+  //   };
 
-    inviteMember();
-  }, [triggerInvite]);
+  //   inviteMember();
+  // }, [triggerInvite]);
 
 
 
-  const sendInvite = () => {
-    if (!email && !phone) {
-      Toast.show({
-        type: "error",
-        text1: "Input Required",
-        text2: "Please enter email or phone number",
-      });
-      return;
-    }
+const sendInvite = async () => {
+  if (!email && !phone) {
+    Toast.show({
+      type: "error",
+      text1: "Input Required",
+      text2: "Please enter email or phone number",
+    });
+    return;
+  }
 
-    if (email && phone) {
-      Toast.show({
-        type: "error",
-        text1: "Choose one method",
-        text2: "Enter either email or phone",
-      });
-      return;
-    }
+  if (email && phone) {
+    Toast.show({
+      type: "error",
+      text1: "Choose one method",
+      text2: "Enter either email or phone",
+    });
+    return;
+  }
 
-    setTriggerInvite(true);
-  };
+  try {
+    showLoader();
+
+    // 🔥 simulate delay (like API)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    Toast.show({
+      type: "success",
+      text1: "Invitation Sent",
+      text2: "Invite simulated successfully 🎉",
+    });
+
+    setEmail("");
+    setPhone("");
+
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: "Invite Failed",
+      text2: "Something went wrong",
+    });
+  } finally {
+    hideLoader();
+  }
+};
 
   return (
 

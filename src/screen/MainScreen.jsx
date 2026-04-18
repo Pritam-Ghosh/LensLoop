@@ -8,7 +8,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Bookmark, Ellipsis, Heart, LayoutDashboard, MessageCircle, Plus, Search, SendHorizontal, SendHorizontalIcon, Sparkles } from 'lucide-react-native';
 import CustomText from '../components/CustomText';
 import StatItem from '../components/StatItem';
-import axios from "axios";
 
 import { colors } from '../Theme/theme';
 import { useContext } from "react";
@@ -61,29 +60,112 @@ const MainScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const { events, setEvents } = useContext(EventContext);
 
-
   const handleSendComment = async () => {
     if (!commentText.trim()) return;
 
-    await handleAddComment(selectedHive._id, commentText);
+    await handleAddComment(selectedHive.id, commentText);
 
     setCommentText("");
     fetchPublicHives();
   };
 
+  const insertDemoPosts = async () => {
+    try {
+      const existing = await AsyncStorage.getItem("HIVES");
+
+      // 🚫 if already exists → do nothing
+      if (existing) return;
+
+      const demo = [
+        {
+          id: "1",
+          hiveName: "Goa Trip 🌴",
+          description: "Beach vibes",
+          coverImage: "https://picsum.photos/500/300?1",
+          createdAt: new Date(),
+
+          user: {
+            _id: "u1",
+            name: "Rahul",
+            profileImage: "https://i.pravatar.cc/150?img=1",
+          },
+
+          likes: [],
+          comments: [],
+          members: [],
+          images: [],
+          videos: [],
+        },
+        {
+          id: "2",
+          hiveName: "Birthday Party 🎉",
+          description: "Crazy night",
+          coverImage: "https://picsum.photos/500/300?2",
+          createdAt: new Date(),
+
+          user: {
+            _id: "u2",
+            name: "Amit",
+            profileImage: "https://i.pravatar.cc/150?img=2",
+          },
+
+          likes: [],
+          comments: [],
+          members: [],
+          images: [],
+          videos: [],
+        }
+      ];
+
+      await AsyncStorage.setItem("HIVES", JSON.stringify(demo));
+
+      console.log("✅ Demo posts inserted");
+
+    } catch (err) {
+      console.log("Demo insert error:", err);
+    }
+  };
+  useEffect(() => {
+    const init = async () => {
+      await insertDemoPosts();   // ✅ ADD THIS
+      await fetchHives();        // already in your code
+    };
+
+    init();
+  }, []);
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchPublicHives = async () => {
+  //       const stored = await AsyncStorage.getItem("HIVES");
+  //       const data = stored ? JSON.parse(stored) : [];
+
+  //       setPublicHives(data);
+  //     };
+  //     fadeAnim.setValue(0);
+  //     Animated.timing(fadeAnim, {
+  //       toValue: 1,
+  //       duration: 1500,
+  //       useNativeDriver: true,
+  //     }).start();
+  //   }, [fadeAnim])
+  // );
+
+
 
   useFocusEffect(
     useCallback(() => {
-      fetchPublicHives();
+      fetchHives(); // ✅ keep this
+
       fadeAnim.setValue(0);
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 1500,
         useNativeDriver: true,
       }).start();
+
+      // AutoSync logic stays
     }, [fadeAnim])
   );
-
   const compressPhoto = async (photo) => {
     try {
       const resized = await ImageResizer.createResizedImage(
@@ -198,27 +280,23 @@ const MainScreen = ({ navigation }) => {
     }
   }, [fetchHives, removeExpiredEvents]);
 
-  const fetchHives = useCallback(async () => {
-    try {
-      const token = await AsyncStorage.getItem("token");
+const fetchHives = useCallback(async () => {
+  try {
+    const stored = await AsyncStorage.getItem("HIVES");
+    const localHives = stored ? JSON.parse(stored) : [];
 
-      if (!token) return;
+    // 🔥 SORT: latest first
+    const sortedHives = [...localHives].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
-      const res = await axios.get(
-        "https://snaphive-node.vercel.app/api/hives",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    setHives(sortedHives);
+    setPublicHives(sortedHives);
 
-      setHives(res.data.hives);
-
-    } catch (err) {
-      console.error("Error loading hives:", err);
-    }
-  }, [setHives]);
+  } catch (err) {
+    console.error("Local fetch error:", err);
+  }
+}, []);
 
 
   useEffect(() => {
@@ -229,7 +307,12 @@ const MainScreen = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchPublicHives();
+      const fetchPublicHives = async () => {
+        const stored = await AsyncStorage.getItem("HIVES");
+        const data = stored ? JSON.parse(stored) : [];
+
+        setPublicHives(data);
+      };
       fetchHives(); // ✅ ADD THIS
 
       fadeAnim.setValue(0);
@@ -245,7 +328,12 @@ const MainScreen = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchPublicHives();
+      const fetchPublicHives = async () => {
+        const stored = await AsyncStorage.getItem("HIVES");
+        const data = stored ? JSON.parse(stored) : [];
+
+        setPublicHives(data);
+      };
 
       fadeAnim.setValue(0);
       Animated.timing(fadeAnim, {
@@ -315,7 +403,9 @@ const MainScreen = ({ navigation }) => {
   );
   const uniqueTodayUsers = Array.from(
     new Map(
-      todayHives.map(hive => [hive.user?._id, hive.user])
+      todayHives
+        .filter(hive => hive.user && hive.user._id) // ✅ FILTER FIX
+        .map(hive => [hive.user._id, hive.user])
     ).values()
   );
 
@@ -330,66 +420,56 @@ const MainScreen = ({ navigation }) => {
   };
 
   const handleLike = async (hiveId) => {
-    try {
-      if (!userId) return;
-      setPublicHives(prev =>
-        prev.map(h => {
-          if (h._id !== hiveId) return h;
+    if (!userId) return;
 
-          const isLiked = h.likes?.some(id => id.toString() === userId);
+    const stored = await AsyncStorage.getItem("HIVES");
+    let hives = stored ? JSON.parse(stored) : [];
 
-          return {
-            ...h,
-            likes: isLiked
-              ? h.likes.filter(id => id.toString() !== userId)
-              : [...(h.likes || []), userId],
-          };
-        })
-      );
-      const token = await AsyncStorage.getItem("token");
+    hives = hives.map(h => {
+      if (h.id !== hiveId) return h;
 
-      await axios.post(
-        `https://snaphive-node.vercel.app/api/hives/${hiveId}/like`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const isLiked = h.likes?.includes(userId);
 
-    } catch (err) {
-      console.log("Like error:", err);
-    }
+      return {
+        ...h,
+        likes: isLiked
+          ? h.likes.filter(id => id !== userId)
+          : [...(h.likes || []), userId],
+      };
+    });
+
+    await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
+
+    setHives(hives);
+    setPublicHives(hives);
   };
 
   const handleAddComment = async (hiveId, text) => {
-    try {
-      const token = await AsyncStorage.getItem("token");
+    const stored = await AsyncStorage.getItem("HIVES");
+    let hives = stored ? JSON.parse(stored) : [];
 
-      await axios.post(
-        `https://snaphive-node.vercel.app/api/hives/${hiveId}/comment`,
-        { text },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+    hives = hives.map(h => {
+      if (h.id !== hiveId) return h;
 
-      setSelectedHive(prev => ({
-        ...prev,
-        comments: [
-          {
-            text: commentText,
-            user: {
-              name: "You",
-              profileImage: null,
-            },
-            createdAt: new Date(),
-          },
-          ...prev.comments,
-        ],
-      }));
-    } catch (err) {
-      console.log("Comment error:", err);
-    }
+      const newComment = {
+        text,
+        user: {
+          name: "You",
+          profileImage: null,
+        },
+        createdAt: new Date(),
+      };
+
+      return {
+        ...h,
+        comments: [newComment, ...(h.comments || [])],
+      };
+    });
+
+    await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
+
+    setHives(hives);
+    setPublicHives(hives);
   };
 
   const filteredHives = hives
@@ -431,7 +511,7 @@ const MainScreen = ({ navigation }) => {
 
 
 
-              {uniqueTodayUsers.map(user => (
+              {uniqueTodayUsers?.map(user => (
                 <TouchableWithoutFeedback
                   key={user._id}
                   onPress={() => openUserStory(user._id)}
@@ -446,13 +526,15 @@ const MainScreen = ({ navigation }) => {
                       padding: 2,
                     }}>
                       <Image
-                        source={{ uri: user.profileImage }}
+                        source={{
+                          uri: user?.profileImage || "https://via.placeholder.com/150"
+                        }}
                         style={{ width: '100%', height: '100%', borderRadius: 50 }}
                       />
                     </View>
 
-                    <CustomText style={{ marginTop: 4, fontSize: 12 }}>
-                      {user.name}
+                    <CustomText>
+                      {user?.name || "User"}
                     </CustomText>
                   </View>
                 </TouchableWithoutFeedback>
@@ -490,11 +572,11 @@ const MainScreen = ({ navigation }) => {
 
 
 
-    
 
-        <View  style={styles.searchContainer}>
 
-          <View style={ { marginHorizontal: width * 0.05,width: '40%',flexDirection: 'row', alignItems: 'flex-start' }}>
+        <View style={styles.searchContainer}>
+
+          <View style={{ marginHorizontal: width * 0.05, width: '40%', flexDirection: 'row', alignItems: 'flex-start' }}>
             <Search color="#6B7280" size={20} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
@@ -505,8 +587,8 @@ const MainScreen = ({ navigation }) => {
             />
           </View>
 
-          <TouchableWithoutFeedback onPress={() => navigation.navigate('Home')} style={{ position: 'absolute', right: 0,top:10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center',  paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6,alignSelf:'flex-start' }}>
+          <TouchableWithoutFeedback onPress={() => navigation.navigate('Home')} style={{ position: 'absolute', right: 0, top: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6, alignSelf: 'flex-start' }}>
               <LayoutDashboard size={14} />
               <CustomText weight="semiBold" style={{ color: '#242424', fontSize: 14 }}>
                 Dashboard
@@ -514,8 +596,8 @@ const MainScreen = ({ navigation }) => {
             </View>
           </TouchableWithoutFeedback>
         </View>
-            
-        <CustomText weight="bold" style={{ color: '#111111', fontSize: 18,paddingHorizontal: 20,marginBottom:8 }}>
+
+        <CustomText weight="bold" style={{ color: '#111111', fontSize: 18, paddingHorizontal: 20, marginBottom: 8 }}>
           New Hives
         </CustomText>
 
@@ -527,7 +609,7 @@ const MainScreen = ({ navigation }) => {
 
           return (
             <View
-              key={hive._id}
+              key={hive.id}
               style={{
                 margin: 10,
                 paddingHorizontal: 12,
@@ -539,10 +621,10 @@ const MainScreen = ({ navigation }) => {
               {/* header */}
               <TouchableWithoutFeedback
                 onPress={() =>
-                  navigation.navigate("FolderLayout", { hiveId: hive._id })
+                  navigation.navigate("FolderLayout", { hiveId: hive.id })
                 }
               >
-                <View style={{ flexDirection: "row", gap: 8, justifyContent: 'space-between',alignItems: 'center' }}>
+                <View style={{ flexDirection: "row", gap: 8, justifyContent: 'space-between', alignItems: 'center' }}>
                   <View style={{ flexDirection: "row", gap: 8, }}>
                     <View
                       style={{
@@ -553,7 +635,9 @@ const MainScreen = ({ navigation }) => {
                       }}
                     >
                       <Image
-                        source={{ uri: hive.user?.profileImage }}
+                        source={{
+                          uri: hive.user?.profileImage || "https://via.placeholder.com/150"
+                        }}
                         style={{ width: "100%", height: "100%" }}
                       />
                     </View>
@@ -581,7 +665,7 @@ const MainScreen = ({ navigation }) => {
               {hive.coverImage && (
                 <TouchableWithoutFeedback
                   onPress={() =>
-                    navigation.navigate("FolderLayout", { hiveId: hive._id })
+                    navigation.navigate("FolderLayout", { hiveId: hive.id })
                   }
                 >
                   <View style={{ marginTop: 18 }}>
@@ -625,7 +709,7 @@ const MainScreen = ({ navigation }) => {
                     icon={Heart}
                     value={hive.likes?.length || 0}
                     liked={isLiked}   // 🔥 ADD THIS
-                    onPress={() => handleLike(hive._id)}
+                    onPress={() => handleLike(hive.id)}
                   />
                   <StatItem
                     icon={MessageCircle}
@@ -688,7 +772,9 @@ const MainScreen = ({ navigation }) => {
           }}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Image
-                source={{ uri: selectedUserHives[0]?.user?.profileImage }}
+                source={{
+                  uri: selectedUserHives[0]?.user?.profileImage || "https://via.placeholder.com/150"
+                }}
                 style={{
                   width: 40,
                   height: 40,
@@ -781,7 +867,9 @@ const MainScreen = ({ navigation }) => {
                     <View key={index} style={{ flexDirection: "row", marginBottom: 15 }}>
 
                       <Image
-                        source={{ uri: item.user?.profileImage }}
+                        source={{
+                          uri: item.user?.profileImage || "https://via.placeholder.com/150"
+                        }}
                         style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
                       />
 
@@ -989,11 +1077,11 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
 
     marginBottom: 8,
-width: '90%',
-margin:'auto',
-overflow: 'hidden',
-borderWidth: 1,
-borderColor: "#e9b793"
+    width: '90%',
+    margin: 'auto',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: "#e9b793"
   },
   searchIcon: {
     marginRight: 10,

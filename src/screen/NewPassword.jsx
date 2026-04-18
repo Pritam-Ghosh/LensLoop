@@ -4,11 +4,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Logo from '../components/Logo';
 import ThemeButton from '../components/ThemeButton';
 import CustomText from '../components/CustomText';
-import { resetpassword } from '../API/API';
-import { resendOtp } from '../API/API';
+
 import Toast from 'react-native-toast-message';
 import { ChevronLeft } from 'lucide-react-native';
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const NewPassword = ({ navigation, route }) => {
   const { email } = route.params;
   const [OTP, setOTP] = useState('');
@@ -34,19 +33,44 @@ const NewPassword = ({ navigation, route }) => {
     }
 
     try {
-      const { data } = await resetpassword({
-        email,
-        otp: OTP,
-        newPassword: password,
-      });
+      const savedOTP = await AsyncStorage.getItem("RESET_OTP");
+      const savedEmail = await AsyncStorage.getItem("RESET_EMAIL");
+
+      // ❌ wrong OTP
+      if (OTP !== savedOTP) {
+        Toast.show({
+          type: 'error',
+          text1: 'Invalid OTP',
+          text2: 'Please enter correct OTP',
+        });
+        return;
+      }
+
+      // ❌ email mismatch (extra safety)
+      if (email !== savedEmail) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Session expired. Try again.',
+        });
+        return;
+      }
+
+      // 🔥 update user locally
+      const storedUser = await AsyncStorage.getItem("user");
+      let user = storedUser ? JSON.parse(storedUser) : null;
+
+      if (user && user.email === email) {
+        user.password = password; // 🔥 update password
+        await AsyncStorage.setItem("user", JSON.stringify(user));
+      }
 
       Toast.show({
         type: 'success',
         text1: 'Password Reset',
-        text2: data.message || 'Password reset successfully',
+        text2: 'Password updated successfully 🎉',
       });
 
-      // 👇 Let toast show, then navigate
       setTimeout(() => {
         navigation.navigate('Login');
       }, 1000);
@@ -55,11 +79,10 @@ const NewPassword = ({ navigation, route }) => {
       Toast.show({
         type: 'error',
         text1: 'Reset Failed',
-        text2: err.response?.data?.message || 'Something went wrong',
+        text2: 'Something went wrong',
       });
     }
   };
-
 
   return (
     <SafeAreaProvider style={styles.container}>
@@ -84,19 +107,24 @@ const NewPassword = ({ navigation, route }) => {
         <TouchableWithoutFeedback
           onPress={async () => {
             try {
-              const { data } = await resendOtp({ email });
+              // 🔥 fake delay
+              await new Promise(resolve => setTimeout(resolve, 1000));
+
+              const newOTP = "1234"; // or random if you want
+
+              await AsyncStorage.setItem("RESET_OTP", newOTP);
 
               Toast.show({
                 type: 'success',
                 text1: 'OTP Resent',
-                text2: data.message || 'Check your email',
+                text2: 'Use 1234 as OTP',
               });
 
             } catch (err) {
               Toast.show({
                 type: 'error',
                 text1: 'Failed',
-                text2: err.response?.data?.message || 'Failed to resend OTP',
+                text2: 'Something went wrong',
               });
             }
           }}

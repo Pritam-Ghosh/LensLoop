@@ -8,10 +8,7 @@ import {
   TextInput,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { updateProfile } from "../API/API"
 import { launchImageLibrary } from "react-native-image-picker";
-import { uploadImageToFirebase } from "../utils/firebaseUpload";
-
 import {
   ChevronRight, Crown, Languages, LogOut, Share2,
   QrCode,
@@ -87,63 +84,31 @@ const EditScreen = ({ navigation, }) => {
         Toast.show({
           type: "info",
           text1: "Nothing to Update",
-          text2: "Please update at least one field or change image",
+          text2: "Please update at least one field",
         });
         return;
       }
 
       setLoading(true);
 
-      const token = await AsyncStorage.getItem("token");
-      if (!token) {
-        Toast.show({
-          type: "error",
-          text1: "Session Expired",
-          text2: "Please login again",
-        });
-        return;
-      }
+      // 🔥 get existing user
+      const storedUser = await AsyncStorage.getItem("user");
+      const user = storedUser ? JSON.parse(storedUser) : {};
 
-      const name = `${firstName} ${lastName}`.trim();
-
-      // ✅ JSON payload (NOT FormData)
-      const payload = {
-        name,
+      const updatedUser = {
+        ...user,
+        name: `${firstName} ${lastName}`.trim(),
         email,
+        profileImage: profileImage || user.profileImage,
       };
 
-      if (profileImage && profileImage.startsWith("file")) {
-        const storedUser = await AsyncStorage.getItem("user");
-        if (!storedUser) throw new Error("User missing");
-
-        const userId = JSON.parse(storedUser)._id;
-
-        Toast.show({
-          type: "info",
-          text1: "Uploading Profile Photo",
-          autoHide: false,
-          position: "top",
-        });
-
-        const firebaseUrl = await uploadImageToFirebase(
-          { uri: profileImage },
-          userId,
-          "profile"
-        );
-
-        Toast.hide();
-
-        payload.profileImage = firebaseUrl;
-      }
-
-      const response = await updateProfile(payload, token);
-
-      await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
+      // 💾 SAVE LOCALLY
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
 
       Toast.show({
         type: "success",
         text1: "Profile Updated",
-        text2: response.data.message || "Your profile was updated successfully",
+        text2: "Changes saved successfully 🎉",
       });
 
       navigation.navigate("MyTabs");
@@ -154,7 +119,7 @@ const EditScreen = ({ navigation, }) => {
       Toast.show({
         type: "error",
         text1: "Update Failed",
-        text2: error.response?.data?.message || "Failed to update profile",
+        text2: "Something went wrong",
       });
 
     } finally {

@@ -14,9 +14,9 @@ import {
     ActivityIndicator
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+
 import Toast from 'react-native-toast-message';
-import { uploadImageToFirebase } from '../utils/firebaseUpload';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -95,8 +95,7 @@ const AutoSyncModal = ({ visible, onCreate, onSkip, photoCount = 0, previewImage
             Toast.show({
                 type: "info",
                 text1: "Select a Hive",
-                text2: "Please select a hive to upload photos",
-                position: "top",
+                text2: "Please select a hive",
             });
             return;
         }
@@ -105,139 +104,68 @@ const AutoSyncModal = ({ visible, onCreate, onSkip, photoCount = 0, previewImage
             Toast.show({
                 type: "error",
                 text1: "No Photos",
-                text2: "No photos available to upload",
-                position: "top",
+                text2: "No photos available",
             });
             return;
         }
 
         setIsUploading(true);
 
-        // Show uploading toast
-        Toast.show({
-            type: "info",
-            text1: "Uploading Photos",
-            text2: `0% - ${photos.length} photo(s)`,
-            autoHide: false,
-            position: "top",
-        });
-
         try {
-            const token = await AsyncStorage.getItem("token");
-            const storedUser = await AsyncStorage.getItem("user");
+            const stored = await AsyncStorage.getItem("HIVES");
+            let hives = stored ? JSON.parse(stored) : [];
 
-            if (!token || !storedUser) {
-                throw new Error("Authentication required");
-            }
+            // 🔥 convert photos to local format
+            const newImages = photos.map(p => ({
+                url: p.uri,
+                type: "image",
+                blurred: false,
+            }));
 
-            const userId = JSON.parse(storedUser)._id;
-            const hiveId = selectedHive._id;
-            const totalImages = photos.length;
-            let completedImages = 0;
+            // 🔥 update selected hive
+            hives = hives.map(h => {
+                if (h.id !== selectedHive._id && h.id !== selectedHive.id) return h;
 
-            console.log(`🔥 Starting upload of ${totalImages} photos to hive: ${selectedHive.hiveName}`);
-
-            const imageUrls = [];
-
-            for (const photo of photos) {
-                try {
-                    const imageUrl = await uploadImageToFirebase(photo, userId, hiveId);
-
-                    imageUrls.push(imageUrl);
-                    completedImages++;
-
-                    const progress = Math.round((completedImages / totalImages) * 100);
-
-                    Toast.show({
-                        type: "info",
-                        text1: "Uploading Photos",
-                        text2: `${progress}% - ${completedImages}/${totalImages} uploaded`,
-                        autoHide: false,
-                        position: "top",
-                    });
-
-                } catch (error) {
-                    console.error("❌ Failed to upload photo:", error);
-                }
-            }
-
-            // Filter out failed uploads
-            const successfulUrls = imageUrls.filter(url => url !== null);
-
-            if (successfulUrls.length === 0) {
-                throw new Error("All uploads failed");
-            }
-
-            console.log(`✅ Successfully uploaded ${successfulUrls.length} photos to Firebase`);
-
-            // 🔥 Send URLs to backend API
-            const res = await axios.post(
-                `https://snaphive-node.vercel.app/api/hives/${hiveId}/images`,
-                { images: successfulUrls },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            console.log('✅ Photos added to hive successfully');
-
-            // Hide uploading toast
-            Toast.hide();
-
-            // Show success toast
-            Toast.show({
-                type: "success",
-                text1: "Upload Complete!",
-                text2: `${successfulUrls.length} photo(s) uploaded to ${selectedHive.hiveName}`,
-                visibilityTime: 4000,
-                position: "top",
+                return {
+                    ...h,
+                    images: [...(h.images || []), ...newImages],
+                };
             });
 
-            // 🔥 Mark photos as handled so they won't show again
-            try {
-                const handledPhotosJson = await AsyncStorage.getItem('AUTO_SYNC_HANDLED_PHOTOS');
-                const handledPhotoUris = handledPhotosJson ? JSON.parse(handledPhotosJson) : [];
+            await AsyncStorage.setItem("HIVES", JSON.stringify(hives));
 
-                const uploadedPhotoUris = photos.map(photo => photo.uri);
-                const updatedHandledUris = [...handledPhotoUris, ...uploadedPhotoUris];
+            Toast.show({
+                type: "success",
+                text1: "Upload Complete",
+                text2: `${photos.length} photo(s) added 🎉`,
+            });
 
-                await AsyncStorage.setItem(
-                    'AUTO_SYNC_HANDLED_PHOTOS',
-                    JSON.stringify(updatedHandledUris)
-                );
+            // mark as handled
+            const handledPhotosJson = await AsyncStorage.getItem('AUTO_SYNC_HANDLED_PHOTOS');
+            const handledPhotoUris = handledPhotosJson ? JSON.parse(handledPhotosJson) : [];
 
-                console.log('✅ Marked photos as handled');
-            } catch (error) {
-                console.error('❌ Error marking photos as handled:', error);
-            }
+            const uploadedPhotoUris = photos.map(photo => photo.uri);
+            const updatedHandledUris = [...handledPhotoUris, ...uploadedPhotoUris];
 
-            // Close both modals
+            await AsyncStorage.setItem(
+                'AUTO_SYNC_HANDLED_PHOTOS',
+                JSON.stringify(updatedHandledUris)
+            );
+
             setShowHiveModal(false);
             setSelectedHive(null);
 
-            // Call onSkip to close main modal and check for next photos
             if (onSkip) {
-                setTimeout(() => {
-                    onSkip();
-                }, 500);
+                setTimeout(() => onSkip(), 300);
             }
 
         } catch (error) {
-            console.error("❌ Upload error:", error);
+            console.log("Upload error:", error);
 
-            // Hide uploading toast
-            Toast.hide();
-
-            // Show error toast
             Toast.show({
                 type: "error",
                 text1: "Upload Failed",
-                text2: error.message || "Please try again",
-                visibilityTime: 3000,
-                position: "top",
+                text2: "Something went wrong",
             });
         } finally {
             setIsUploading(false);
@@ -321,7 +249,7 @@ const AutoSyncModal = ({ visible, onCreate, onSkip, photoCount = 0, previewImage
                                 </Text>
 
                                 {/* Primary Button */}
-                                <TouchableOpacity style={styles.primaryButton} onPress={onCreate}>
+                                <TouchableOpacity style={styles.primaryButton} onPress={() => onCreate(photos)}>
                                     <Text style={styles.primaryText}>Create Hive</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => setShowHiveModal(true)}>
@@ -385,11 +313,11 @@ const AutoSyncModal = ({ visible, onCreate, onSkip, photoCount = 0, previewImage
                                 ) : (
                                     hives.map((item, i) => (
                                         <TouchableOpacity
-                                            key={item._id}
+                                            key={item.id}
                                             onPress={() => setSelectedHive(item)}
                                             style={[
                                                 styles.hiveRow,
-                                                selectedHive?._id === item._id && styles.selectedHive
+                                                selectedHive?._id === item.id && styles.selectedHive
                                             ]}
                                             disabled={isUploading}
                                         >
@@ -411,7 +339,7 @@ const AutoSyncModal = ({ visible, onCreate, onSkip, photoCount = 0, previewImage
                                                 </CustomText>
                                             </View>
 
-                                            {selectedHive?._id === item._id && (
+                                            {selectedHive?._id === item.id && (
                                                 <View style={styles.tick}>
                                                     <Text style={{ color: '#fff' }}>✓</Text>
                                                 </View>

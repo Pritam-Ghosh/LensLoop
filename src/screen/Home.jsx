@@ -417,38 +417,24 @@ const Home = ({ navigation, route }) => {
     }
   }, [route?.params?.newEvent]);
 
-  // Fetch hives function
+
   // Fetch hives function
   const fetchHives = useCallback(async () => {
     try {
-      setHivesLoading(true); // ✅ ADD THIS LINE
-      const token = await AsyncStorage.getItem("token");
+      setHivesLoading(true);
 
-      if (!token) {
-        console.log("No auth token found. Please login first.");
-        setHivesLoading(false); // ✅ ADD THIS LINE
-        return;
-      }
+      const stored = await AsyncStorage.getItem("HIVES");
+      const localHives = stored ? JSON.parse(stored) : [];
 
-      const res = await axios.get(
-        "https://snaphive-node.vercel.app/api/hives",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setHives(res.data.hives);
-      setEvents(res.data.hives);
-      console.log("User Hives:", res.data.hives);
+      setHives(localHives);
+      setEvents(localHives);
 
     } catch (err) {
-      console.error("Error loading hives:", err.response?.data || err);
+      console.error("Local fetch error:", err);
     } finally {
-      setHivesLoading(false); // ✅ ADD THIS LINE
+      setHivesLoading(false);
     }
-  }, [setHives, setEvents]);
+  }, []);
 
   // Fetch hives on mount
   useEffect(() => {
@@ -582,13 +568,13 @@ const Home = ({ navigation, route }) => {
                   </Text>
                 </LinearGradient>
               </TouchableOpacity> */}
-<TouchableOpacity
-           
+              <TouchableOpacity
+
                 onPress={() => navigation.navigate('CreateHive')}>
-              <View style={{width:"100%"}}>
-                <Image source={createbtn} style={{ maxWidth: "100%" }} resizeMode="contain" />
-              </View>
-</TouchableOpacity>
+                <View style={{ width: "100%" }}>
+                  <Image source={createbtn} style={{ maxWidth: "100%" }} resizeMode="contain" />
+                </View>
+              </TouchableOpacity>
 
             </View>
 
