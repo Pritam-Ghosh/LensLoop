@@ -458,13 +458,13 @@ const ClickPhoto = ({ navigation, route }) => {
         try {
             setIsSaving(true);
 
-            // 🔥 capture filtered image
+            //  capture filtered image
             const localUri = await viewShotRef.current.capture();
 
-            // 🔥 save to gallery
+            //  save to gallery
             await CameraRoll.save(localUri, { type: "photo" });
 
-            // 🔥 SAVE INTO HIVE (LOCAL)
+            //  SAVE INTO HIVE (LOCAL)
             const stored = await AsyncStorage.getItem("HIVES");
             let hives = stored ? JSON.parse(stored) : [];
 
@@ -496,7 +496,7 @@ const ClickPhoto = ({ navigation, route }) => {
     };
 
 
-    // ✅ UPDATED USE MEDIA HANDLER
+    // UPDATED USE MEDIA HANDLER
     const handleUseMedia = async () => {
         try {
             setIsSaving(true);
@@ -588,7 +588,7 @@ const ClickPhoto = ({ navigation, route }) => {
             Alert.alert('Crop Failed', 'Failed to apply crop');
         }
     };
-    // ⏱ Auto stop recording at 10 seconds
+    //  Auto stop recording at 10 seconds
     useEffect(() => {
         if (isRecording && recordSeconds >= 10) {
             stopRecording();

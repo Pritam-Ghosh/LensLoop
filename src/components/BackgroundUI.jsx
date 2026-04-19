@@ -19,27 +19,19 @@ const BackgroungUI = ({ children }) => {
         backgroundColor="transparent"
         barStyle="dark-content"
       />
+
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#fff" }}
         edges={["top", "bottom"]}
       >
-
-        <ImageBackground
-          source={require('../../assets/appbackground.jpg')}
-          resizeMode="cover"
-          style={styles.background}
-        >
-          {/* Content */}
-          <View style={styles.content}>
-            {children}
-          </View>
-
-        </ImageBackground>
-
+        {/* ✅ White background only */}
+        <View style={styles.content}>
+          {children}
+        </View>
       </SafeAreaView>
     </SafeAreaProvider>
-  )
-}
+  );
+};
 export default BackgroungUI
 
 

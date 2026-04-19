@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, TouchableWithoutFeedba
 import { useNavigation } from "@react-navigation/native";
 import { useNotification } from "../context/NotificationContext";
 import MaskedView from "@react-native-masked-view/masked-view";
-const logo = require("../../assets/snaphive-logo.png");
+const logo = require("../../assets/logo.png");
 import { colors } from '../Theme/theme';
 import { Bell, Search } from "lucide-react-native";
 import LinearGradient from "react-native-linear-gradient";
@@ -37,6 +37,7 @@ const TopNav = () => {
             resizeMode: "contain",
           }}
         />
+
       </View>
 
       <View style={{ flexDirection: 'row', gap: 18 }}>
@@ -69,13 +70,13 @@ const TopNav = () => {
 const styles = StyleSheet.create({
   container: {
     height: 65,
-    backgroundColor: "#faf2f834",
+    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: rs(14),
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    borderBottomWidth: 0.3,
+    borderBottomColor: "#f5f4f3",
   },
   leftSection: {
     flexDirection: "row",

@@ -116,13 +116,13 @@ function CustomTabBar({ state, descriptors, navigation }) {
                       activeOpacity={0.8}
                       onPress={onPress}
                       style={{
-                        width: 70,
-                        height: 70,
+                        width: 50,
+                        height: 50,
                         borderRadius: 35,
-                        backgroundColor: "#F441A5",
+                        backgroundColor: "#fff",
 
                         borderWidth: 3,
-                        borderColor: "#ffffff",
+                        borderColor: "#F441A5",
 
                         alignItems: "center",
                         justifyContent: "center",
@@ -134,8 +134,8 @@ function CustomTabBar({ state, descriptors, navigation }) {
                         source={createHiveLogo}
                         resizeMode="contain"
                         style={{
-                          width: 42,
-                          height: 42,
+                          width: 38,
+                          height: 38,
                         }}
                       />
                     </TouchableOpacity>
@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: "center",
-    backgroundColor: "#f7e0eaf5",
-    borderTopWidth: 1,
+    backgroundColor: "#fff",
+    borderTopWidth: 0.3,
     borderTopColor: '#e0e0e0'
   },
   container: {
@@ -237,10 +237,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     height: 80,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopWidth: 0.3,
+    borderTopColor: "#f5f4f3",
     width: "100%",
-
   },
   tabButton: {
     flex: 1,

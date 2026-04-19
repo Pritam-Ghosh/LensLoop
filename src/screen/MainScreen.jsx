@@ -133,28 +133,12 @@ const MainScreen = ({ navigation }) => {
 
     init();
   }, []);
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchPublicHives = async () => {
-  //       const stored = await AsyncStorage.getItem("HIVES");
-  //       const data = stored ? JSON.parse(stored) : [];
-
-  //       setPublicHives(data);
-  //     };
-  //     fadeAnim.setValue(0);
-  //     Animated.timing(fadeAnim, {
-  //       toValue: 1,
-  //       duration: 1500,
-  //       useNativeDriver: true,
-  //     }).start();
-  //   }, [fadeAnim])
-  // );
 
 
 
   useFocusEffect(
     useCallback(() => {
-      fetchHives(); // ✅ keep this
+      fetchHives();
 
       fadeAnim.setValue(0);
       Animated.timing(fadeAnim, {
@@ -280,23 +264,23 @@ const MainScreen = ({ navigation }) => {
     }
   }, [fetchHives, removeExpiredEvents]);
 
-const fetchHives = useCallback(async () => {
-  try {
-    const stored = await AsyncStorage.getItem("HIVES");
-    const localHives = stored ? JSON.parse(stored) : [];
+  const fetchHives = useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem("HIVES");
+      const localHives = stored ? JSON.parse(stored) : [];
 
-    // 🔥 SORT: latest first
-    const sortedHives = [...localHives].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
+      // 🔥 SORT: latest first
+      const sortedHives = [...localHives].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
 
-    setHives(sortedHives);
-    setPublicHives(sortedHives);
+      setHives(sortedHives);
+      setPublicHives(sortedHives);
 
-  } catch (err) {
-    console.error("Local fetch error:", err);
-  }
-}, []);
+    } catch (err) {
+      console.error("Local fetch error:", err);
+    }
+  }, []);
 
 
   useEffect(() => {
@@ -478,14 +462,11 @@ const fetchHives = useCallback(async () => {
       hive.description?.toLowerCase().includes(searchQuery.toLowerCase())
     )
     : [];
-
-
-
   return (
 
     <BackgroungUI>
       <TopNav />
-      <ScrollView style={{ marginBottom: 85 }}
+      <ScrollView style={{ marginBottom: 65 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -502,14 +483,18 @@ const fetchHives = useCallback(async () => {
             }}
           >
 
-            <View style={{ flexDirection: 'row' }}>
-              <CustomText weight='bold' style={{ marginBottom: 12, color: '#000000', fontSize: 18 }}>Friends</CustomText>
-
-            </View>
-
             <View style={{ flexDirection: 'row', gap: 8 }}>
 
+              <TouchableWithoutFeedback onPress={() => navigation.navigate('InviteMember')}>
 
+                <View style={{ alignItems: 'center' }}>
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: 70, height: 70, backgroundColor: '#ffffff', borderRadius: 50, borderWidth: 0.4, borderColor: '#70707082', }} >
+                    <Plus color="#000000" />
+                  </View>
+                  <CustomText weight='medium' style={{ fontSize: 10 }}>Add new</CustomText>
+                </View>
+              </TouchableWithoutFeedback>
 
               {uniqueTodayUsers?.map(user => (
                 <TouchableWithoutFeedback
@@ -533,46 +518,18 @@ const fetchHives = useCallback(async () => {
                       />
                     </View>
 
-                    <CustomText>
+                    <CustomText weight='medium' style={{ fontSize: 10 }}>
                       {user?.name || "User"}
                     </CustomText>
                   </View>
                 </TouchableWithoutFeedback>
               ))}
 
-              <TouchableWithoutFeedback onPress={() => navigation.navigate('InviteMember')}>
 
-                <View style={{ alignItems: 'center' }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: width * 0.03,
-                      backgroundColor: '#ffffff2d',
-                      padding: 15,
-                      height: 70,
-                      borderRadius: 25,
-                      borderWidth: 0.4,
-                      borderColor: '#707070',
-                      paddingLeft: 16,
-                      paddingRight: 30,
-                    }}
-                  >
-                    <Plus color="#000000" />
-                    <CustomText weight='semiBold' style={{ marginTop: 4, fontSize: 14, }}>Add {'\n'}Friend</CustomText>
-                  </View>
-                  {/* <CustomText weight='medium' style={{ marginTop: 4, fontSize: 12, }}>Add Hive</CustomText> */}
-                </View>
-              </TouchableWithoutFeedback>
 
             </View>
           </View>
         </View>
-
-
-
-
 
         <View style={styles.searchContainer}>
 
@@ -1042,18 +999,8 @@ const styles = StyleSheet.create({
   // status
   ImportSection: {
     padding: 20,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.25,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-      },
-      android: {
 
-      },
-    }),
+    overflow: 'hidden',
   },
 
   // Feed
