@@ -384,23 +384,9 @@ user: {
                     </CustomText>
                 </View>
                 <View style={[styles.createHiveCard, { marginBottom: 120, }]}>
-                    <LinearGradient
-                        colors={['#52AB5E', '#52AB5E']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1.6, y: 0 }}
-                        style={styles.continueBtn}
-                    >
-                        <View style={styles.touchable}>
-                            <View style={styles.content}>
 
-                                <CustomText weight="Bold" style={styles.continueTxt}>
-                                    {t('hiveDetails')}
-                                </CustomText>
-                            </View>
-                        </View>
-                    </LinearGradient>
 
-                    <View style={{ paddingHorizontal: 20, backgroundColor: 'transparent', borderRadius: 16, overflow: 'hidden', backgroundColor: '#fff', width: "100%", margin: 'auto', borderWidth: 0, }}>
+                    <View style={{ paddingHorizontal: 14, backgroundColor: 'transparent', borderRadius: 16, overflow: 'hidden', backgroundColor: colors.secondary, width: "100%", margin: 'auto', borderWidth: 0, }}>
                         <View style={{ marginBottom: 16, marginTop: 16 }}>
                             <CustomText weight='bold' style={{ marginBottom: 4, color: '#374151' }}>{t('hiveName')} *</CustomText>
                             <TextInput
@@ -941,7 +927,7 @@ const styles = StyleSheet.create({
     inputType: {
         borderWidth: 1,
         borderColor: '#F6F6F6',
-        backgroundColor: '#F6F6F6',
+        backgroundColor: '#fff',
         borderRadius: 10,
         paddingLeft: 18,
         paddingVertical: 16,
@@ -949,7 +935,7 @@ const styles = StyleSheet.create({
     },
 
     privacyContainer: {
-        backgroundColor: '#ffffff',
+
         borderRadius: 12,
         marginVertical: 20,
     },
@@ -1003,7 +989,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         marginTop: 20,
         paddingBottom: 16,
-        borderWidth: 1,
+        borderWidth: 0,
         borderColor: "#e7e7e7"
         // shadowColor: '#000',
         // shadowOffset: { width: 0, height: 4 },

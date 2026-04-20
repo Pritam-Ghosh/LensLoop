@@ -543,30 +543,6 @@ const MainScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <View style={styles.searchContainer}>
-
-          <View style={{ marginHorizontal: width * 0.05, width: '40%', flexDirection: 'row', alignItems: 'flex-start' }}>
-            <Search color="#6B7280" size={20} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={t('search')}
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-
-          <TouchableWithoutFeedback onPress={() => navigation.navigate('Home')} style={{ position: 'absolute', right: 0, top: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6, alignSelf: 'flex-start' }}>
-              <LayoutDashboard size={14} />
-              <CustomText weight="semiBold" style={{ color: '#242424', fontSize: 14 }}>
-                Dashboard
-              </CustomText>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-
-
         {publicHives.map((hive) => {
           const isLiked = hive.likes?.some(
             id => id?.toString() === userId
@@ -700,7 +676,7 @@ const MainScreen = ({ navigation }) => {
       <Modal visible={storyVisible} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: "#000" }}>
 
-          {/* 🔥 TOP PROGRESS BARS */}
+        
           <View style={{
             position: "absolute",
             top: 50,

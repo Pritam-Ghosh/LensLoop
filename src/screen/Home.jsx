@@ -639,7 +639,7 @@ const Home = ({ navigation, route }) => {
                           navigation.navigate("FolderLayout", {
                             image: { uri: item.coverImage },
                             folderName: item.hiveName,
-                            hiveId: item._id,
+                            hiveId: item.id,
                           })
                         }
                       >
@@ -673,8 +673,8 @@ const Home = ({ navigation, route }) => {
                           navigation.navigate("FolderLayout", {
                             image: { uri: item.coverImage },
                             folderName: item.hiveName,
-                            hiveId: item._id,
-                            
+                        hiveId: item.id,
+
                           })
                         }
                       >

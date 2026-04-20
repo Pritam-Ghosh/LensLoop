@@ -13,6 +13,7 @@ import {
   Animated,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import Video from "react-native-video";
 
@@ -408,7 +409,8 @@ const FolderLayout = ({ navigation, route }) => {
 
   const canBlur = !isHiveMember;
 
-  const isHiveOwner = loggedUser?._id === hiveInfo?.user?._id;
+const isHiveOwner =
+  (loggedUser?._id || loggedUser?.id) === hiveInfo?.user?._id;
 
 
   const chatUsers = [
@@ -431,7 +433,39 @@ const FolderLayout = ({ navigation, route }) => {
   );
 
 
+const confirmDelete = (hiveId) => {
+  Alert.alert(
+    "Delete Hive",
+    "Are you sure you want to delete this hive?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const stored = await AsyncStorage.getItem("HIVES");
+            let hives = stored ? JSON.parse(stored) : [];
 
+            // ❌ remove this hive
+            const updatedHives = hives.filter(h => h.id !== hiveId);
+
+            await AsyncStorage.setItem("HIVES", JSON.stringify(updatedHives));
+
+            // 🔥 go back after delete
+            navigation.goBack();
+
+          } catch (error) {
+            console.log("Delete error:", error);
+          }
+        },
+      },
+    ]
+  );
+};
 
   return (
     <ScreenLayout
@@ -583,9 +617,7 @@ const FolderLayout = ({ navigation, route }) => {
 
               {isHiveOwner && (
                 <>
-                  <View style={{ height: 1, backgroundColor: '#E5E7EB' }} />
-
-                  {/* EDIT HIVE */}
+                  {/* EDIT Post */}
                   <TouchableOpacity
                     onPress={() =>
                       navigation.navigate("EditHive", {
@@ -594,7 +626,7 @@ const FolderLayout = ({ navigation, route }) => {
                     }
                     style={{ paddingVertical: height * 0.015, paddingHorizontal: width * 0.04 }}
                   >
-                    <CustomText weight="medium">{t('Edit Hive')}</CustomText>
+                    <CustomText weight="medium">{t('Edit Post')}</CustomText>
                   </TouchableOpacity>
 
                   <View style={{ height: 1, backgroundColor: '#E5E7EB' }} />
@@ -611,7 +643,7 @@ const FolderLayout = ({ navigation, route }) => {
                     }}
                   >
                     <CustomText weight="medium" style={{ color: "#EF4444" }}>
-                      Delete Hive
+                      Delete Post
                     </CustomText>
                   </TouchableOpacity>
                 </>
