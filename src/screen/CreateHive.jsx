@@ -213,7 +213,8 @@ const CreateHive = ({ navigation, route }) => {
     // };
 
     const handleCreateHive = async () => {
-
+const storedUser = await AsyncStorage.getItem("user");
+const parsedUser = storedUser ? JSON.parse(storedUser) : null;
         try {
             if (isCreateDisabled) {
                 Toast.show({
@@ -228,29 +229,36 @@ const CreateHive = ({ navigation, route }) => {
 
 
             // 📦 Create local hive object
-    // ✅ FIRST
-const newImages = incomingPhotos.map(p => ({
-  url: p.uri,
-  type: "image",
-  blurred: false,
-}));
+            // ✅ FIRST
+            const newImages = incomingPhotos.map(p => ({
+                url: p.uri,
+                type: "image",
+                blurred: false,
+            }));
 
-// ✅ THEN
-const newHive = {
+            // ✅ THEN
+ const newHive = {
   id: Date.now().toString(),
   hiveName,
   description: hiveDescription || "No description",
   privacyMode: hiveType,
+
+  // ✅ ADD THIS
+user: {
+  _id: parsedUser?._id || parsedUser?.id || Date.now().toString(),
+  name: parsedUser?.name || "You",
+  profileImage: parsedUser?.profileImage || "https://via.placeholder.com/150",
+},
   isTemporary: isEnabled,
   eventDate: isEnabled ? formatAPIDate(startDate) : "",
   startTime: isEnabled ? formatAPITime(startTime) : "",
   endTime: isEnabled ? formatAPITime(endTime) : "",
   expiryDate: isEnabled ? formatAPIDate(endDate) : "",
+
   coverImage: uploadedImage?.uri || selectedStockImage,
-  createdAt: new Date(),
+  createdAt: new Date().toISOString(),
 
-  images: newImages, // ✅ now valid
-
+  images: newImages,
   videos: [],
   likes: [],
   comments: [],
@@ -270,7 +278,10 @@ const newHive = {
                 text2: t('startSharingMemories'),
             });
 
-            navigation.navigate("HomeScreen", { showCreateToast: true });
+            navigation.navigate("HomeScreen", {
+                showCreateToast: true,
+                openTab: hiveType === "invite" ? "profile" : "grid",
+            });
 
         } catch (error) {
             Toast.show({
@@ -366,45 +377,15 @@ const newHive = {
             <TopNav />
             <ScrollView
                 style={styles.container}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* <View style={{ alignItems: 'flex-start', marginTop: 12 }}>
-                        <View
-                            style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                alignSelf: 'flex-start',
-                                gap: 8,
-                                backgroundColor: 'rgba(255, 223, 186, 0.5)',
-                                borderRadius: 25,
-                                paddingHorizontal: 16,
-                                paddingVertical: 6,
-                            }}
-                        >
-                            <Sparkles color="#FFAD60" size={14} />
-                            <CustomText weight="medium" style={styles.importHeading}>
-                                {t('createANew')}
-                            </CustomText>
-                            <CustomText weight="bold" style={styles.importHeading}>
-                                {t('hive')}
-                            </CustomText>
-                        </View>
-                    </View> */}
-
+                showsVerticalScrollIndicator={false}>
                 <View>
                     <CustomText weight="bold" style={styles.snapText}>
-                        Create a New Hive
+                        Create a New Post
                     </CustomText>
                 </View>
-                <CustomText weight='regular' style={{ color: '#000000', fontSize: 16, }}>Start Shareing Memories</CustomText>
-                <CustomText weight='regular' style={{ color: '#374151' }}>{t('setupPhotoCollection')}</CustomText>
-
                 <View style={[styles.createHiveCard, { marginBottom: 120, }]}>
                     <LinearGradient
-                        colors={[
-                            'rgba(243,92,142,0.9)',
-                            'rgba(247,169,122,0.9)'
-                        ]}
+                        colors={['#52AB5E', '#52AB5E']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1.6, y: 0 }}
                         style={styles.continueBtn}
@@ -419,7 +400,7 @@ const newHive = {
                         </View>
                     </LinearGradient>
 
-                    <View style={{ paddingHorizontal: 20, backgroundColor: 'transparent', borderRadius: 16, overflow: 'hidden', position: 'relative', top: -10, backgroundColor: '#fff', width: "100%", margin: 'auto', borderWidth: 1, borderColor: '#F57E94' }}>
+                    <View style={{ paddingHorizontal: 20, backgroundColor: 'transparent', borderRadius: 16, overflow: 'hidden', backgroundColor: '#fff', width: "100%", margin: 'auto', borderWidth: 0, }}>
                         <View style={{ marginBottom: 16, marginTop: 16 }}>
                             <CustomText weight='bold' style={{ marginBottom: 4, color: '#374151' }}>{t('hiveName')} *</CustomText>
                             <TextInput
@@ -451,7 +432,7 @@ const newHive = {
                             />
                         </View>
 
-                        <CustomText weight='bold' style={{ marginBottom: 0, color: '#374151' }}>{t('coverImage')}</CustomText>
+                        <CustomText weight='bold' style={{ marginBottom: 0, color: '#374151' }}>{t('coverImage')}*</CustomText>
 
 
                         <CustomText weight='mediumItalic' style={{ marginBottom: 8, color: '#777777ff', fontSize: 12 }}>{t('imageSizeWarning')}</CustomText>
@@ -603,7 +584,7 @@ const newHive = {
 
                         <View style={{ marginBottom: 0, marginTop: 16 }}>
                             <CustomText weight="bold" style={{ marginBottom: 4, color: '#374151' }}>
-                                Privacy Settings
+                                Privacy Settings*
                             </CustomText>
                             <Dropdown
                                 style={[styles.inputType]}
@@ -623,14 +604,12 @@ const newHive = {
                             />
                         </View>
 
-
-
                         <View style={styles.privacyContainer}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBlock: 12 }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', }}>
                                     <CircleDotDashed color={"#b8a816"} />
                                     <View style={{ marginLeft: 12 }}>
-                                        <CustomText weight='bold' style={{ fontSize: 16 }}>{t('temporaryEventHive')}</CustomText>
+                                        <CustomText weight='bold' style={{ fontSize: 16 }}>Temporary Event Post</CustomText>
                                         {/* <CustomText weight='regular' style={{ color: '#374151', fontSize: 12 }}>{t('setDatesForEvent')}</CustomText> */}
                                     </View>
                                 </View>
@@ -858,235 +837,16 @@ const newHive = {
                                 </View>
                             )}
 
-                            <View style={{ backgroundColor: "#ccc", height: 0.4, width: "100%", marginTop: 12 }} />
-
-                            {/* Enable Messagging */}
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBlock: 12 }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-
-                                    <MessageCircleWarning color={"#44b816"} />
-
-                                    <View style={{ marginLeft: 12 }}>
-                                        <CustomText weight='bold' style={{ fontSize: 16 }}>Enable Messagging</CustomText>
-                                        {/* <CustomText weight='regular' style={{ color: '#374151', fontSize: 12 }}>{t('setDatesForEvent')}</CustomText> */}
-                                    </View>
-                                </View>
-                                <Switch
-                                    trackColor={{ false: '#767577', true: '#81b0ff' }}
-                                    thumbColor={isEnabledMessage ? '#4b5cf5ff' : '#f4f3f4'}
-                                    ios_backgroundColor="#3e3e3e"
-                                    onValueChange={toggleMessageSwitch}
-                                    value={isEnabledMessage}
-                                />
-                            </View>
-
-                            <View style={{ backgroundColor: "#ccc", height: 0.4, width: "100%", marginBlock: 12 }} />
-
-                            {/* admin message control */}
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBlock: 12 }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-                                    <ShieldAlert color={"#b816b8"} />
-
-                                    <View style={{ marginLeft: 12 }}>
-                                        <CustomText weight='bold' style={{ fontSize: 16 }}>Admin Message Control</CustomText>
-                                        {/* <CustomText weight='regular' style={{ color: '#374151', fontSize: 12 }}>{t('setDatesForEvent')}</CustomText> */}
-                                    </View>
-                                </View>
-                                <Switch
-                                    trackColor={{ false: '#767577', true: '#81b0ff' }}
-                                    thumbColor={isEnabledAdmin ? '#4b5cf5ff' : '#f4f3f4'}
-                                    ios_backgroundColor="#3e3e3e"
-                                    onValueChange={toggleAdminSwitch}
-                                    value={isEnabledAdmin}
-                                />
-                            </View>
-
-                            <View style={{ backgroundColor: "#ccc", height: 0.4, width: "100%", }} />
 
                         </View>
 
-                        {/* <View style={[styles.radiobuttonContainer, { borderColor: '#FFBCE1', backgroundColor: '#FDF2F8', marginTop: 20 }]}>
 
-                            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', marginBottom: 12 }}>
-                                <Shield color='#5B0064' />
-                                <CustomText weight='bold' style={{ fontSize: 16, }}>{t('mediaUploadSettings')}</CustomText>
-                            </View>
-                            <TouchableOpacity
-                                style={styles.privacy}
-                                onPress={() => setUploadType('automatic')}
-                                activeOpacity={0.7}
-                            >
-                                <View >
-                                    <View style={{
-                                        height: 20,
-                                        width: 20,
-                                        borderRadius: 10,
-                                        borderWidth: 2,
-                                        borderColor: uploadType === 'automatic' ? '#EC4899' : '#D1D5DB',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                    }}>
-                                        {uploadType === 'automatic' && (
-                                            <View style={{
-                                                height: 10,
-                                                width: 10,
-                                                borderRadius: 5,
-                                                backgroundColor: '#EC4899',
-                                            }} />
-                                        )}
-                                    </View>
-                                </View>
-
-                                <View style={{ flex: 1, marginLeft: 12 }}>
-                                    <CustomText weight='bold' style={{ fontSize: 16 }}>{t('automaticUpload')}</CustomText>
-                                    <CustomText weight='medium' style={{ color: colors.textGray, fontSize: 12 }}>{t('automaticUploadDesc')}</CustomText>
-                                </View>
-                            </TouchableOpacity>
-
-                            {uploadType === 'automatic' && (
-                                <View
-                                    style={{
-                                        flexDirection: 'row',
-                                        backgroundColor: '#FFF0CF',
-                                        borderRadius: 12,
-                                        padding: 16,
-                                        marginTop: 8,
-                                        marginBottom: 10,
-                                    }}
-                                >
-                                    <View>
-                                        <BadgeInfo color="#a1a1a1ff" size={20} />
-                                    </View>
-
-                                    <View style={{ flex: 1, marginLeft: 8 }}>
-                                        <CustomText
-                                            weight='medium'
-                                            style={{ color: colors.textGray, fontSize: 12 }}>
-                                            {t('automaticUploadWarning')}
-                                        </CustomText>
-                                    </View>
-                                </View>
-                            )}
-
-
-
-                            <TouchableOpacity
-                                style={styles.privacy}
-                                onPress={() => setUploadType('approval')}
-                                activeOpacity={0.7}
-                            >
-                                <View >
-                                    <View style={{
-                                        height: 20,
-                                        width: 20,
-                                        borderRadius: 10,
-                                        borderWidth: 2,
-                                        borderColor: uploadType === 'approval' ? '#EC4899' : '#D1D5DB',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                    }}>
-                                        {uploadType === 'approval' && (
-                                            <View style={{
-                                                height: 10,
-                                                width: 10,
-                                                borderRadius: 5,
-                                                backgroundColor: '#EC4899',
-                                            }} />
-                                        )}
-                                    </View>
-                                </View>
-                                <View style={{ flex: 1, marginLeft: 12 }}>
-                                    <CustomText weight='bold' style={{ fontSize: 16 }}>{t('approvalRequired')}</CustomText>
-                                    <CustomText weight='medium' style={{ color: colors.textGray, fontSize: 12 }}>{t('approvalRequiredDesc')}</CustomText>
-                                </View>
-                            </TouchableOpacity>
-
-
-
-
-
-                        </View> */}
                         <View style={{ marginBottom: 12, }}>
 
 
 
 
-                            {/* 
-                            <View style={[styles.radiobuttonContainer, { borderColor: '#5AAF9A', backgroundColor: '#F0FCF9' }]}>
 
-                                <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', marginBottom: 12 }}>
-                                    <Shield color='#5B0064' />
-                                    <CustomText weight='bold' style={{ fontSize: 16 }}>{t('messagingAndComments')}</CustomText>
-                                </View>
-
-                                <TouchableOpacity style={styles.privacy} onPress={() => setSelectedOption('enable')}>
-                          
-                                    <View style={{
-                                        height: 18,
-                                        width: 18,
-                                        borderRadius: 10,
-                                        borderWidth: 2,
-                                        borderColor: selectedOption === 'enable' ? '#5AAF9A' : '#9CA3AF',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        {selectedOption === 'enable' && (
-                                            <View style={{
-                                                height: 10,
-                                                width: 10,
-                                                borderRadius: 6,
-                                                backgroundColor: '#5AAF9A'
-                                            }} />
-                                        )}
-                                    </View>
-
-                                    <View style={{ flex: 1, marginLeft: 12 }}>
-                                        <CustomText weight='bold' style={{ fontSize: 16 }}>{t('enableMessaging')}</CustomText>
-                                        <CustomText weight='medium' style={{ color: '#374151' }}>
-                                            {t('enableMessagingDesc')}
-                                        </CustomText>
-                                    </View>
-                                </TouchableOpacity>
-
-                   
-                                <TouchableOpacity style={styles.privacy} onPress={() => setSelectedOption('admin')}>
-              
-                                    <View style={{
-                                        height: 18,
-                                        width: 18,
-                                        borderRadius: 10,
-                                        borderWidth: 2,
-                                        borderColor: selectedOption === 'admin' ? '#5AAF9A' : '#9CA3AF',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        {selectedOption === 'admin' && (
-                                            <View style={{
-                                                height: 10,
-                                                width: 10,
-                                                borderRadius: 6,
-                                                backgroundColor: '#5AAF9A'
-                                            }} />
-                                        )}
-                                    </View>
-
-                                    <View style={{ flex: 1, marginLeft: 12 }}>
-                                        <CustomText weight='bold' style={{ fontSize: 16 }}>{t('adminMessageControl')}</CustomText>
-                                        <CustomText weight='medium' style={{ color: '#374151' }}>
-                                            {t('adminMessageControlDesc')}
-                                        </CustomText>
-                                    </View>
-                                </TouchableOpacity>
-
-                                <View style={[styles.privacy, { backgroundColor: 'transparent', borderColor: '#5AAF9A' }]}>
-                                    <Info color='#5AAF9A' />
-                                    <View style={{ flex: 1, marginLeft: 12 }}>
-                                        <CustomText weight='medium' style={{ color: '#5AAF9A' }}>
-                                            {t('messagingInfo')}
-                                        </CustomText>
-                                    </View>
-                                </View>
-                            </View> */}
 
 
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1116,12 +876,9 @@ const newHive = {
                                 </TouchableOpacity>
                                 <TouchableWithoutFeedback onPress={() => setShowPrivacyModal(true)}>
                                     <View style={{ paddingHorizontal: 20 }}>
-                                        <CustomText weight="medium" style={{ color: '#646464' }}>
-                                            {/* {t('privacyPolicyAgreement')} */}
+                                        <CustomText weight="medium" style={{ color: '#646464', fontSize: 10 }}>
                                             I have read the Content Responsibility & Privacy Policy
                                             and agree to all content uploaded to my event hive
-                                            {/* <CustomText weight="bold" style={{ textDecorationLine: 'underline' }}> {t('privacyPolicyLink')} </CustomText> */}
-                                            {/* {t('privacyPolicyAgreementEnd')} */}
                                         </CustomText>
                                     </View>
                                 </TouchableWithoutFeedback>
@@ -1171,7 +928,7 @@ const styles = StyleSheet.create({
     },
     uploadContainer: {
         width: '100%',
-        height: 80,
+        height: 150,
         borderWidth: 1.8,
         borderColor: '#E5E7EB',
         borderStyle: 'dashed',

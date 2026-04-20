@@ -17,6 +17,7 @@ import CustomText from "./CustomText";
 
 // responsive
 import { Dimensions } from "react-native";
+import { colors } from "../Theme/theme";
 const { width, height } = Dimensions.get("window");
 const scale = width / 390;
 const vscale = height / 844;
@@ -66,7 +67,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
                     <View
                       style={{ padding: 10, borderRadius: 16, }}
                     >
-                      <House width={rs(26)} height={rs(26)} color='#F442A5' strokeWidth={1.2} />
+                      <House width={rs(26)} height={rs(26)} color={colors.primary} strokeWidth={1.2} />
                     </View>
                   ) : (
                     <View style={{ padding: 10, borderRadius: 16 }}>
@@ -86,7 +87,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
                       style={{ padding: 10, borderRadius: 16 }}
                     >
-                      <UserRound width={rs(26)} height={rs(26)} color='#F442A5' strokeWidth={1.2} />
+                      <UserRound width={rs(26)} height={rs(26)} color={colors.primary} strokeWidth={1.2} />
                     </View>
                   ) : (
                     <View style={{ padding: 10, borderRadius: 16 }}>
@@ -122,7 +123,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
                         backgroundColor: "#fff",
 
                         borderWidth: 3,
-                        borderColor: "#F441A5",
+                        borderColor: colors.primary,
 
                         alignItems: "center",
                         justifyContent: "center",
@@ -152,7 +153,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
                       style={{ padding: 10, borderRadius: 16 }}
                     >
-                      <ImagePhoto width={rs(26)} height={rs(26)} color='#F442A5' strokeWidth={1.2} />
+                      <ImagePhoto width={rs(26)} height={rs(26)} color={colors.primary} strokeWidth={1.2} />
                     </View>
                   ) : (
                     <View style={{ padding: 10, borderRadius: 16 }}>
@@ -172,7 +173,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
                       style={{ padding: 10, borderRadius: 16 }}
                     >
-                      <Camera width={rs(26)} height={rs(26)} color='#F442A5' strokeWidth={1.2} />
+                      <Camera width={rs(26)} height={rs(26)} color={colors.primary} strokeWidth={1.2} />
                     </View>
                   ) : (
                     <View style={{ padding: 10, borderRadius: 16 }}>

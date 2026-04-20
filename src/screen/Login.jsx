@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
         width: "100%",
         borderColor: '#ccc',
         borderWidth: 1,
-        borderRadius: rs(16),
+        borderRadius: 7,
         paddingHorizontal: rs(20),
         paddingVertical: rs(18),
         fontSize: rs(16),
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: rs(12),
         width: '100%',
-
+borderRadius: 50,
         marginTop: rvs(0),
         paddingVertical: rvs(18),
     },

@@ -42,6 +42,7 @@ import {
   BrainCircuit,
   Heart,
   MessageCircleMore,
+  Trash2,
 } from "lucide-react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 import { Dimensions } from "react-native";
@@ -510,7 +511,7 @@ const FolderLayout = ({ navigation, route }) => {
                   style={{
                     width: `${uploadProgress}%`,
                     height: "100%",
-                    backgroundColor: "#fc0069",
+                    backgroundColor: colors.black,
                   }}
                 />
               </View>
@@ -530,9 +531,9 @@ const FolderLayout = ({ navigation, route }) => {
               onPress={handleUpload}
             >
               <View>
-                <Plus color="#DA3C84" size={width * 0.05} />
+                <Plus color={colors.black} size={width * 0.05} />
               </View>
-              <CustomText weight="bold" style={{ color: '#DA3C84', fontSize: width * 0.035 }}>
+              <CustomText weight="bold" style={{ color: colors.black, fontSize: width * 0.035 }}>
                 {t('myImages')}
               </CustomText>
             </TouchableOpacity>
@@ -584,6 +585,7 @@ const FolderLayout = ({ navigation, route }) => {
                 <>
                   <View style={{ height: 1, backgroundColor: '#E5E7EB' }} />
 
+                  {/* EDIT HIVE */}
                   <TouchableOpacity
                     onPress={() =>
                       navigation.navigate("EditHive", {
@@ -593,6 +595,24 @@ const FolderLayout = ({ navigation, route }) => {
                     style={{ paddingVertical: height * 0.015, paddingHorizontal: width * 0.04 }}
                   >
                     <CustomText weight="medium">{t('Edit Hive')}</CustomText>
+                  </TouchableOpacity>
+
+                  <View style={{ height: 1, backgroundColor: '#E5E7EB' }} />
+
+                  {/* DELETE HIVE */}
+                  <TouchableOpacity
+                    onPress={() => confirmDelete(hiveId)}
+                    style={{
+                      paddingVertical: height * 0.015,
+                      paddingHorizontal: width * 0.04,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <CustomText weight="medium" style={{ color: "#EF4444" }}>
+                      Delete Hive
+                    </CustomText>
                   </TouchableOpacity>
                 </>
               )}
@@ -634,7 +654,7 @@ const FolderLayout = ({ navigation, route }) => {
               <View style={styles.grid}>
                 {galleryLoading ? (
                   <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#DA3C84" />
+                    <ActivityIndicator size="large" color={colors.black} />
                   </View>
                 ) : uploadedImages.length === 0 ? (
                   <CustomText style={styles.infoText}>
@@ -1163,14 +1183,10 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.01,
   },
   tabButtonActive: {
-    backgroundColor: "#DA3C84",
+    backgroundColor: colors.black,
     borderWidth: 1,
-    borderColor: '#DA3C84',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: colors.black,
+
   },
   tabText: {
     color: "#888888",

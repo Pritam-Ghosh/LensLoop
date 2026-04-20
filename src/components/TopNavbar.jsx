@@ -9,9 +9,6 @@ import { Bell, Search } from "lucide-react-native";
 import LinearGradient from "react-native-linear-gradient";
 import CustomText from "./CustomText";
 
-
-
-
 // responsive
 import { Dimensions } from "react-native";
 const { width, height } = Dimensions.get("window");
@@ -24,30 +21,24 @@ const TopNav = () => {
   const navigation = useNavigation();
   const { notifications, unreadCount } = useNotification();
 
-
-
   return (
     <View style={styles.container}>
       <View style={styles.leftSection}>
         <Image
           source={logo}
           style={{
-            width: rs(90),
-            height: rvs(40),
+            width: rs(100),
+            height: rvs(50),
             resizeMode: "contain",
           }}
         />
-
       </View>
-
       <View style={{ flexDirection: 'row', gap: 18 }}>
-
-
         <TouchableOpacity
           style={styles.bellWrapper}
           onPress={() => navigation.navigate("Notification")}
         >
-          <Bell width={rs(24)} height={rs(24)} color={'#D142BB'} strokeWidth={1.5} />
+          <Bell width={rs(24)} height={rs(24)} color={colors.primary} strokeWidth={1.5} />
           {unreadCount > 0 && (
             <View
               style={styles.badge}
@@ -56,13 +47,7 @@ const TopNav = () => {
             </View>
           )}
         </TouchableOpacity>
-
-
-
       </View>
-
-
-
     </View>
   );
 };
@@ -74,7 +59,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: rs(14),
+    paddingHorizontal: rs(15),
     borderBottomWidth: 0.3,
     borderBottomColor: "#f5f4f3",
   },

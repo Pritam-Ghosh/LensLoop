@@ -1,16 +1,33 @@
-import React, { useEffect } from "react";
-import { View, Text, StyleSheet, Dimensions, Image } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, Dimensions, Animated } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import LinearGradient from "react-native-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Logo from "../components/Logo";
 
-
 const { width, height } = Dimensions.get("window");
-const logo = require("../../assets/loader.png");
 
 const Landing = ({ navigation }) => {
+ 
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+
+    Animated.parallel([
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 5,   
+        tension: 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+
     const checkLoginStatus = async () => {
       try {
         const token = await AsyncStorage.getItem("token");
@@ -27,52 +44,38 @@ const Landing = ({ navigation }) => {
       }
     };
 
-    // ⏱ Small delay for showing landing briefly
+   
     const timer = setTimeout(() => {
       checkLoginStatus();
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [navigation]);
+  }, []);
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Full Screen Gradient */}
-        <LinearGradient
-          colors={["#F35C8E", "#F7A97A"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
-          {/* Centered Text */}
-          <View style={styles.centerContainer}>
-            <Image source={logo} style={{ width: 200, aspectRatio: 1, resizeMode: "contain" }} />
+        <View style={styles.centerContainer}>
+          <Animated.View
+            style={{
+              opacity: opacityAnim,
+              transform: [{ scale: scaleAnim }],
+            }}
+          >
+            <Logo style={{ width: 260, height: 260 }} />
+          </Animated.View>
 
-          </View>
-        </LinearGradient>
+        </View>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
+  centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    width,
-    height,
-  },
-  centerContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 48,
-    fontWeight: "800",
-    color: "#fff",
-    letterSpacing: 2,
   },
 });
 

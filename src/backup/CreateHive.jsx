@@ -377,7 +377,7 @@ const CreateHive = ({ navigation, route }) => {
 
                     <View style={[styles.createHiveCard, { marginBottom: 120, }]}>
                         <LinearGradient
-                            colors={['#DA3C84', '#FEE8A3']}
+                            colors={['#52AB5E', '#52AB5E']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1.6, y: 0 }}
                             style={styles.continueBtn}

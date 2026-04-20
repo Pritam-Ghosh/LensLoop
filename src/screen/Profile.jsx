@@ -83,54 +83,54 @@ const Profile = ({ navigation, }) => {
       console.log("Share Error:", error);
     }
   };
-useEffect(() => {
-  const loadUser = async () => {
-    const stored = await AsyncStorage.getItem("user");
+  useEffect(() => {
+    const loadUser = async () => {
+      const stored = await AsyncStorage.getItem("user");
 
-    if (!stored) {
-      const demoUser = {
-        id: "user123",
-        name: "Pritam",
-        email: "pritam@mail.com",
-        profileImage: null,
-      };
+      if (!stored) {
+        const demoUser = {
+          id: "user123",
+          name: "Pritam",
+          email: "pritam@mail.com",
+          profileImage: null,
+        };
 
-      await AsyncStorage.setItem("user", JSON.stringify(demoUser));
-      setUser(demoUser);
-    } else {
-      setUser(JSON.parse(stored));
+        await AsyncStorage.setItem("user", JSON.stringify(demoUser));
+        setUser(demoUser);
+      } else {
+        setUser(JSON.parse(stored));
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      showLoader();
+
+      // ❌ DO NOT remove user (frontend app needs it)
+      // await AsyncStorage.removeItem("user");
+
+      Toast.show({
+        type: 'success',
+        text1: 'Logged Out',
+        text2: 'Demo mode reset 👋',
+      });
+      navigation.navigate('Signup');
+      // Optional: clear app data if needed
+      // await AsyncStorage.clear();
+
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Logout Failed',
+        text2: 'Please try again',
+      });
+    } finally {
+      hideLoader();
     }
   };
-
-  loadUser();
-}, []);
-
-const handleLogout = async () => {
-  try {
-    showLoader();
-
-    // ❌ DO NOT remove user (frontend app needs it)
-    // await AsyncStorage.removeItem("user");
-
-    Toast.show({
-      type: 'success',
-      text1: 'Logged Out',
-      text2: 'Demo mode reset 👋',
-    });
-navigation.navigate('Signup');
-    // Optional: clear app data if needed
-    // await AsyncStorage.clear();
-
-  } catch (err) {
-    Toast.show({
-      type: 'error',
-      text1: 'Logout Failed',
-      text2: 'Please try again',
-    });
-  } finally {
-    hideLoader();
-  }
-};
 
 
 
@@ -172,7 +172,7 @@ navigation.navigate('Signup');
       }
     >
       <View style={{
-        backgroundColor: "#FBF3F9", paddingVertical: 12,
+        backgroundColor: "#ffffff", paddingVertical: 12,
       }}>
 
 
@@ -187,12 +187,8 @@ navigation.navigate('Signup');
             marginTop: -30,
             borderWidth: 1,
             borderColor: '#fff',
-            backgroundColor: 'rgba(243, 92, 142, 0.5)',
-            elevation: 5,
-            shadowColor: "#d6d6d6",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 6,
+            backgroundColor: 'rgba(82, 171, 94, 0.8)',
+
           }}
           onPress={() => navigation.navigate("EditProfile")}
         >
@@ -206,92 +202,6 @@ navigation.navigate('Signup');
       </View>
 
 
-
-
-      {/* <View style={{ paddingHorizontal: width * 0.09, backgroundColor: '#FDF4F9' }}>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            marginTop: height * 0.01,
-            marginTop: 20
-          }}
-        >
-          <View>
-            <View
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-
-              }}
-            >
-              <CustomText
-                weight="bold"
-                style={[styles.cardText, { textAlign: 'center' }]}
-              >
-                {events.length}
-              </CustomText>
-
-              <CustomText
-                weight="medium"
-                style={[styles.dashText, { textAlign: 'center' }]}
-              >
-                {t('totalHives')}
-              </CustomText>
-            </View>
-
-          </View>
-          <View style={{ height: 50, width: 1, backgroundColor: '#7e7e7e52' }} />
-          <View >
-            <View
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <CustomText
-                weight="bold"
-                style={[styles.cardText, { textAlign: 'center' }]}
-              >
-                {events.reduce((total, event) => {
-                  const imageCount = event.images?.length || event.photos?.length || 0;
-                  return total + imageCount;
-                }, 0)}
-              </CustomText>
-
-              <CustomText
-                weight="medium"
-                style={[styles.dashText, { textAlign: 'center' }]}
-              >
-                {t('photos')}
-              </CustomText>
-            </View>
-          </View>
-          <View style={{ height: 50, width: 1, backgroundColor: '#7e7e7e52' }} />
-          <View >
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <CustomText
-                weight="bold"
-                style={[styles.cardText, { textAlign: 'center' }]}
-              >
-                {hives.reduce((total, hive) => total + (hive.members?.length || 0), 0)}
-              </CustomText>
-
-              <CustomText
-                weight="medium"
-                style={[styles.dashText, { textAlign: 'center' }]}
-              >
-                {t('members')}
-              </CustomText>
-            </View>
-          </View>
-        </View>
-
-
-      </View> */}
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
@@ -304,17 +214,8 @@ navigation.navigate('Signup');
           marginTop: 20,
           borderRadius: 12,
 
-          // Android shadow
-          elevation: 5,
 
-          // iOS shadow
-          shadowColor: "#0000004d",
-          shadowOffset: {
-            width: 0,
-            height: 3,
-          },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
+
         }}>
 
 
@@ -323,15 +224,12 @@ navigation.navigate('Signup');
             onPress={() => navigation.navigate('Language')}
           >
             <View style={styles.iconBox}>
-              <Languages size={20} color="#F98935" />
+              <Languages size={20} color={colors.primary} />
             </View>
             <View style={styles.textBox}>
               <CustomText weight="medium" style={styles.title}>
                 {t('language')}
               </CustomText>
-              {/* <CustomText weight="medium" style={styles.subtitle}>
-         {t('english')}
-            </CustomText> */}
             </View>
             <ChevronRight color="#B0B0B0" size={18} />
           </TouchableOpacity>
@@ -343,7 +241,7 @@ navigation.navigate('Signup');
             onPress={() => setModalVisible(true)}
           >
             <View style={styles.iconBox}>
-              <Crown size={20} color="#F98935" />
+              <Crown size={20} color={colors.primary} />
             </View>
             <View style={styles.textBox}>
               <CustomText weight="medium" style={styles.title}>
@@ -359,7 +257,7 @@ navigation.navigate('Signup');
             onPress={() => navigation.navigate('ContactUs')}
           >
             <View style={styles.iconBox}>
-              <MessageCircle size={20} color="#F98935" />
+              <MessageCircle size={20} color={colors.primary} />
             </View>
             <View style={styles.textBox}>
               <CustomText weight="medium" style={styles.title}>
@@ -375,7 +273,7 @@ navigation.navigate('Signup');
             onPress={openStore}
           >
             <View style={styles.iconBox}>
-              <Heart size={20} color="#F98935" />
+              <Heart size={20} color={colors.primary} />
             </View>
             <View style={styles.textBox}>
               <CustomText weight="medium" style={styles.title}>
@@ -391,7 +289,7 @@ navigation.navigate('Signup');
             onPress={shareApp}
           >
             <View style={styles.iconBox}>
-              <Share2 size={20} color="#F98935" />
+              <Share2 size={20} color={colors.primary} />
             </View>
             <View style={styles.textBox}>
               <CustomText weight="medium" style={styles.title}>
@@ -406,7 +304,7 @@ navigation.navigate('Signup');
             style={[styles.rowProfile, { borderBottomWidth: 0 }]}
             onPress={handleLogout}
           >
-            <View style={[styles.iconBox, { backgroundColor: "#ffe2e2ff" }]}>
+            <View style={[styles.iconBox, {}]}>
               <LogOut size={20} color="#ff1f1fff" />
             </View>
             <View style={styles.textBox}>
@@ -430,7 +328,7 @@ navigation.navigate('Signup');
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: { paddingHorizontal: 20, paddingBottom: 220, elevation: 5, backgroundColor: '#FAF2F8', },
+  scrollContainer: { paddingBottom: 220, backgroundColor: '#ffffff', },
   category: {
     fontSize: 14,
     fontWeight: "600",
@@ -501,7 +399,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFF3E6',
+
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,

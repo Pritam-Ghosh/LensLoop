@@ -28,6 +28,7 @@ import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 // svg
 import Igoogle from "../../assets/Igoogle.svg";
 import Iapple from "../../assets/apple2.svg";
+import { AtSign, Smartphone } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get("window");
 
@@ -152,38 +153,53 @@ const Signup = ({ navigation }) => {
           <CustomText weight='medium' style={[styles.description, { paddingInline: 32 }]}>
             Automatically share photos taken by members of your group
           </CustomText>
-          <View style={{ flexDirection: "row", marginTop: 20 }}>
-
+          <View
+            style={{
+              flexDirection: "row",
+              backgroundColor: "#F4FBF6",
+              borderRadius: 50,
+              padding: 5,
+              marginTop: 20,
+              alignSelf: "center",
+            }}
+          >
+            {/* PHONE TAB */}
             <Pressable
               onPress={() => setSignupType("phone")}
               style={{
-                flex: 1,
-                padding: 12,
-                borderWidth: 1,
-                borderColor: signupType === "phone" ? "#000" : "#ccc",
-                borderRadius: 10,
-                marginRight: 5,
-                alignItems: "center"
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 50,
+                backgroundColor:
+                  signupType === "phone" ? "#52AB5E" : "transparent",
               }}
             >
-              <Text>Phone</Text>
+              <Smartphone
+                size={18}
+                color={signupType === "phone" ? "#fff" : "#52AB5E"}
+              />
             </Pressable>
 
+            {/* EMAIL TAB */}
             <Pressable
               onPress={() => setSignupType("email")}
               style={{
-                flex: 1,
-                padding: 12,
-                borderWidth: 1,
-                borderColor: signupType === "email" ? "#000" : "#ccc",
-                borderRadius: 10,
-                marginLeft: 5,
-                alignItems: "center"
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 50,
+                backgroundColor:
+                  signupType === "email" ? "#52AB5E" : "transparent",
               }}
             >
-              <Text>Email</Text>
+              <AtSign
+                size={18}
+                color={signupType === "email" ? "#fff" : "#52AB5E"}
+              />
             </Pressable>
-
           </View>
           <View style={{ width: "100%", marginTop: 20 }}>
             {signupType === "phone" ? (
@@ -203,12 +219,12 @@ const Signup = ({ navigation }) => {
                   }}
                   containerStyle={{
                     width: "100%",
-                    borderRadius: 16,
+                    borderRadius: 7,
                     borderWidth: 1,
                     borderColor: "#ccc",
                   }}
                   textContainerStyle={{
-                    borderRadius: 16,
+                    borderRadius: 7,
                     backgroundColor: "#fff",
                   }}
                   textInputStyle={{
@@ -221,7 +237,7 @@ const Signup = ({ navigation }) => {
 
               <View style={{ width: "100%", marginTop: 20 }}>
                 <TextInput
-                  style={styles.input}
+                  style={styles.emailInput}
                   placeholder="Enter your email"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -235,7 +251,7 @@ const Signup = ({ navigation }) => {
 
           <View style={{ width: '100%', marginTop: 20 }}>
             <TextInput
-              style={styles.input}
+              style={styles.emailInput}
               value={password}
               onChangeText={setPassword}
               placeholder='Create your password'
@@ -438,6 +454,18 @@ const styles = StyleSheet.create({
     marginHorizontal: rs(10),
     color: '#000',
     fontSize: rs(16),
+  },
+  emailInput: {
+    marginTop: rvs(20),
+    width: "100%",
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 7,
+    paddingHorizontal: rs(20),
+    paddingVertical: rs(18),
+    fontSize: rs(16),
+    textAlign: 'left',
+    paddingLeft: rs(27),
   },
 });
 

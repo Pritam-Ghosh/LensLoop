@@ -83,6 +83,7 @@ const MainScreen = ({ navigation }) => {
           description: "Beach vibes",
           coverImage: "https://picsum.photos/500/300?1",
           createdAt: new Date(),
+          privacyMode: "public",
 
           user: {
             _id: "u1",
@@ -102,6 +103,7 @@ const MainScreen = ({ navigation }) => {
           description: "Crazy night",
           coverImage: "https://picsum.photos/500/300?2",
           createdAt: new Date(),
+          privacyMode: "public",
 
           user: {
             _id: "u2",
@@ -269,13 +271,18 @@ const MainScreen = ({ navigation }) => {
       const stored = await AsyncStorage.getItem("HIVES");
       const localHives = stored ? JSON.parse(stored) : [];
 
-      // 🔥 SORT: latest first
       const sortedHives = [...localHives].sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
 
       setHives(sortedHives);
-      setPublicHives(sortedHives);
+
+      // 🔥 IMPORTANT FIX
+      const publicOnly = sortedHives.filter(
+        hive => hive.privacyMode === "public"
+      );
+
+      setPublicHives(publicOnly);
 
     } catch (err) {
       console.error("Local fetch error:", err);
@@ -380,11 +387,18 @@ const MainScreen = ({ navigation }) => {
   const [selectedUserHives, setSelectedUserHives] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const today = new Date().toDateString();
 
-  const todayHives = publicHives.filter(hive =>
-    new Date(hive.createdAt).toDateString() === today
-  );
+  const today = new Date();
+
+  const todayHives = publicHives.filter(hive => {
+    const hiveDate = new Date(hive.createdAt);
+
+    return (
+      hiveDate.getDate() === today.getDate() &&
+      hiveDate.getMonth() === today.getMonth() &&
+      hiveDate.getFullYear() === today.getFullYear()
+    );
+  });
   const uniqueTodayUsers = Array.from(
     new Map(
       todayHives
@@ -480,11 +494,9 @@ const MainScreen = ({ navigation }) => {
             style={{
               flex: 1,
               justifyContent: 'center',
-            }}
-          >
+            }} >
 
             <View style={{ flexDirection: 'row', gap: 8 }}>
-
               <TouchableWithoutFeedback onPress={() => navigation.navigate('InviteMember')}>
 
                 <View style={{ alignItems: 'center' }}>
@@ -507,7 +519,7 @@ const MainScreen = ({ navigation }) => {
                       height: 70,
                       borderRadius: 50,
                       borderWidth: 3,
-                      borderColor: '#E83084',
+                      borderColor: colors.primary,
                       padding: 2,
                     }}>
                       <Image
@@ -553,10 +565,6 @@ const MainScreen = ({ navigation }) => {
             </View>
           </TouchableWithoutFeedback>
         </View>
-
-        <CustomText weight="bold" style={{ color: '#111111', fontSize: 18, paddingHorizontal: 20, marginBottom: 8 }}>
-          New Hives
-        </CustomText>
 
 
         {publicHives.map((hive) => {
@@ -998,8 +1006,10 @@ const styles = StyleSheet.create({
 
   // status
   ImportSection: {
-    padding: 20,
-
+    paddingRight: 20,
+    paddingLeft: 20,
+    paddingBottom: 10,
+    paddingTop: 8,
     overflow: 'hidden',
   },
 

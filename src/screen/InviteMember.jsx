@@ -40,7 +40,7 @@ const InviteMember = ({ navigation, route }) => {
   const [copied, setCopied] = useState(false);
   const [triggerInvite, setTriggerInvite] = useState(false);
   const [phone, setPhone] = useState("");
-const inviteLink = `snaphive://hive/${hiveId}`;
+  const inviteLink = `snaphive://hive/${hiveId}`;
 
 
   const scrollRef = useRef(null);
@@ -127,50 +127,50 @@ const inviteLink = `snaphive://hive/${hiveId}`;
 
 
 
-const sendInvite = async () => {
-  if (!email && !phone) {
-    Toast.show({
-      type: "error",
-      text1: "Input Required",
-      text2: "Please enter email or phone number",
-    });
-    return;
-  }
+  const sendInvite = async () => {
+    if (!email && !phone) {
+      Toast.show({
+        type: "error",
+        text1: "Input Required",
+        text2: "Please enter email or phone number",
+      });
+      return;
+    }
 
-  if (email && phone) {
-    Toast.show({
-      type: "error",
-      text1: "Choose one method",
-      text2: "Enter either email or phone",
-    });
-    return;
-  }
+    if (email && phone) {
+      Toast.show({
+        type: "error",
+        text1: "Choose one method",
+        text2: "Enter either email or phone",
+      });
+      return;
+    }
 
-  try {
-    showLoader();
+    try {
+      showLoader();
 
-    // 🔥 simulate delay (like API)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      // 🔥 simulate delay (like API)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    Toast.show({
-      type: "success",
-      text1: "Invitation Sent",
-      text2: "Invite simulated successfully 🎉",
-    });
+      Toast.show({
+        type: "success",
+        text1: "Invitation Sent",
+        text2: "Invite simulated successfully 🎉",
+      });
 
-    setEmail("");
-    setPhone("");
+      setEmail("");
+      setPhone("");
 
-  } catch (error) {
-    Toast.show({
-      type: "error",
-      text1: "Invite Failed",
-      text2: "Something went wrong",
-    });
-  } finally {
-    hideLoader();
-  }
-};
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Invite Failed",
+        text2: "Something went wrong",
+      });
+    } finally {
+      hideLoader();
+    }
+  };
 
   return (
 
@@ -348,8 +348,6 @@ const sendInvite = async () => {
                 backgroundColor: "#D1D5DB",
               }}
             />
-
-
             <CustomText
               style={{
                 marginHorizontal: 10,
@@ -445,29 +443,17 @@ const sendInvite = async () => {
               </View>
             </View>
           </View>
-
-
-
-
         </ScrollView>
-
-
-
-
         <QRCodeModal visible={modalVisible} onClose={() => setModalVisible(false)} />
       </ScreenLayout>
     </KeyboardAvoidingView>
   );
 };
 
-
-
-
 const styles = StyleSheet.create({
   scrollContainer: {
     paddingHorizontal: 20,
     paddingBottom: 120,
-
   },
 
   profileOverlay: {
@@ -674,11 +660,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
     gap: 12,
   },
 

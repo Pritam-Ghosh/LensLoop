@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useContext, useRef } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Platform, Animated, TextInput, TouchableWithoutFeedback, Text } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Platform, Animated, TextInput, TouchableWithoutFeedback, Text, Pressable } from 'react-native';
 import { RefreshControl } from 'react-native';
-import { Sparkles, Users, FileImage, Clock5, ImagePlus, MoveRight, Plus, FolderOpen, CalendarDays, Search, EllipsisVertical, Share2, Lock, LockKeyhole, Heart, ChevronRight } from 'lucide-react-native';
+import { Sparkles, Users, FileImage, Clock5, ImagePlus, MoveRight, Plus, FolderOpen, CalendarDays, Search, EllipsisVertical, Share2, Lock, LockKeyhole, Heart, ChevronRight, Grid, Play, Repeat, User } from 'lucide-react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { EventContext } from '../context/EventContext';
 import { colors } from '../Theme/theme';
@@ -57,6 +57,7 @@ const safeRemoveItem = async (key) => {
 
 // assets
 const hero = require('../../assets/hero.png');
+
 const profile = require('../../assets/profile.jpg');
 const AUTO_SYNC_HANDLED_DATES_KEY = "AUTO_SYNC_HANDLED_DATES";
 const AUTO_SYNC_SKIPPED_DATES_KEY = "AUTO_SYNC_SKIPPED_DATES"; // Add this line
@@ -84,7 +85,9 @@ const Home = ({ navigation, route }) => {
     previewImage: null,
     dateString: null, // Add this
   });
-
+  const [tab, setTab] = useState("grid");
+  const activeColor = "#000000";
+  const inactiveColor = "#999";
   // Start background transition animation
   useFocusEffect(
     useCallback(() => {
@@ -480,6 +483,13 @@ const Home = ({ navigation, route }) => {
       hive.description?.toLowerCase().includes(searchQuery.toLowerCase())
     )
     : [];
+  const publicHives = filteredHives.filter(
+    hive => hive.privacyMode === "public"
+  );
+
+  const inviteHives = filteredHives.filter(
+    hive => hive.privacyMode === "invite"
+  );
 
   return (
 
@@ -495,120 +505,41 @@ const Home = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
+          }>
 
 
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 20,
+              marginTop: 10,
+            }}
+          >
 
-
-          {/* <View style={[styles.searchContainer, { marginHorizontal: width * 0.05 }]}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder={t('search')}
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            <Search color="#6B7280" size={20} style={styles.searchIcon} />
-          </View> */}
-
-          {/* Background Transition Section */}
-          {/* Background Banner Section */}
-          <View style={styles.ImportSection}>
-
-
-
-            {/* Content */}
-            <View style={styles.bannerContent}>
-              {/* Welcome Badge */}
-              <View style={styles.welcomeBadge}>
-                {/* <Sparkles color="#DA3C84" size={18} /> */}
-                {/* <CustomText weight="medium" style={styles.importHeading}>
-                  {t('welcome')}
-                </CustomText>
-
-                <CustomText weight="bold" style={styles.importHeading}>
-                  {user ? user.name : t('loading')}!
-                </CustomText> */}
-              </View>
-
-              {/* Title */}
-              <CustomText
-                weight="bold"
-                style={styles.importSub}
-              >
-                {t('captureYourMoments')}
-              </CustomText>
-
-              {/* Subtitle */}
-              <CustomText
-                weight="medium"
-                style={styles.importSubLine}
-              >
-                {t('letMemoriesFlow')}
-              </CustomText>
-
-              {/* <TouchableOpacity
-                style={styles.importBtnWrapper}
-                onPress={() => navigation.navigate('CreateHive')}
-              >
-                <LinearGradient
-                  colors={['#F35C8E', '#F7A97A']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.importBtnWhite}
-                >
-                  <Plus color="#ffffff" size={20} />
-                  <Text
-         
-   
-                    style={{ color: '#fff', fontWeight: '600', fontSize: 18 }}
-                  >
-                    Create Hive
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity> */}
-              <TouchableOpacity
-
-                onPress={() => navigation.navigate('CreateHive')}>
-                <View style={{ width: "100%" }}>
-                  <Image source={createbtn} style={{ maxWidth: "100%" }} resizeMode="contain" />
-                </View>
-              </TouchableOpacity>
-
-            </View>
-
-          </View>
-
-          <View style={{ paddingHorizontal: width * 0.05 }}>
-            {/* Dashboard Cards */}
+            <CustomText weight="bold" style={{ fontSize: 24, color: "#2F3E46", }}>Dashboard</CustomText>
 
             <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                marginTop: height * 0.01,
-              }}
-            >
-
+              style={{ width: 70, height: 70, borderRadius: 50, overflow: "hidden", borderWidth: 0, borderColor: "#EAF7EE", }}>
+              <Image source={profile} style={{ width: "100%", height: "100%", }} />
+            </View>
+          </View>
+          <View style={{}}>
+            {/* Dashboard Cards */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', marginTop: height * 0.01, paddingHorizontal: width * 0.05 }}  >
               {/* Hives Card */}
               <View style={styles.dashCard}>
                 <View style={{ alignItems: 'center' }}>
 
                   <CustomText
                     weight="bold"
-                    style={[styles.cardText, { color: '#F97316' }]}
+                    style={[styles.cardText,]}
                   >
                     {events.length}
                   </CustomText>
 
-                  <CustomText
-                    weight="medium"
-                    style={styles.dashText}
-                  >
-                    Hive
-                  </CustomText>
+                  <CustomText weight="medium" style={styles.dashText}  >Post </CustomText>
 
                 </View>
               </View>
@@ -621,7 +552,7 @@ const Home = ({ navigation, route }) => {
 
                   <CustomText
                     weight="bold"
-                    style={[styles.cardText, { color: '#EC4899' }]}
+                    style={[styles.cardText,]}
                   >
                     {events.reduce((total, event) => {
                       const imageCount =
@@ -650,7 +581,7 @@ const Home = ({ navigation, route }) => {
 
                   <CustomText
                     weight="bold"
-                    style={[styles.cardText, { color: '#7C3AED' }]}
+                    style={[styles.cardText,]}
                   >
                     {hives.reduce(
                       (total, hive) =>
@@ -670,180 +601,102 @@ const Home = ({ navigation, route }) => {
               </View>
 
             </View>
+
+
+            <View style={{ marginTop: 20, paddingHorizontal: width * 0.05 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center" }}>
+                <Pressable onPress={() => setTab("grid")} style={{ flex: 1, alignItems: "center", paddingVertical: 10 }}>
+                  <Grid size={22} color={tab === "grid" ? activeColor : inactiveColor} />
+                </Pressable>
+                <Pressable onPress={() => setTab("profile")} style={{ flex: 1, alignItems: "center", paddingVertical: 10 }}>
+                  <User size={22} color={tab === "profile" ? activeColor : inactiveColor} />
+                </Pressable>
+              </View>
+              <View style={{ flexDirection: "row", height: 2 }}>
+                <View style={{ flex: 1, backgroundColor: tab === "grid" ? activeColor : "transparent" }} />
+                <View style={{ flex: 1, backgroundColor: tab === "profile" ? activeColor : "transparent" }} />
+              </View>
+            </View>
+
+
             <View style={{ paddingBottom: 100 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: 20 }}>
-                <View style={styles.eventHeader}>
-                  <CustomText weight="medium" style={styles.eventSection}>
-                    {t('yourHives')}
-                  </CustomText>
-                  <CustomText weight="medium" style={{ color: colors.textGray, marginTop: 4 }}>
-                    {t('managePhotoCollections')}
-                  </CustomText>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', }}>
-                  <CustomText weight="medium" style={{ fontSize: 14 }}>
-                    All
-                  </CustomText>
-                  <ChevronRight size={16} />
+              {tab === "grid" && (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 16 }}>
 
-                </View>
-              </View>
-
-
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  justifyContent: 'space-between',
-                  marginTop: 16,
-                }}
-              >
-                {hivesLoading ? (
-                  // ✅ LOADING STATE - Show 4 skeleton cards
-                  <>
-                    {[1, 2, 3, 4].map((item) => (
-                      <View key={item} style={[styles.eventCard, { width: "48%" }]}>
-                        <View style={[styles.eventImage, { backgroundColor: '#E5E7EB' }]} />
-                        <View style={styles.eventInfo}>
-                          <View style={{ backgroundColor: '#E5E7EB', height: 16, borderRadius: 4, marginBottom: 12, width: '70%' }} />
-                        </View>
+                  {hivesLoading ? (
+                    [1, 2, 3, 4, 5, 6].map((item) => (
+                      <View key={item} style={{ width: "33.33%", aspectRatio: 1, padding: 1 }}>
+                        <View style={{ flex: 1, backgroundColor: "#E5E7EB" }} />
                       </View>
-                    ))}
-                  </>
-                ) : filteredHives.length > 0 ? (
-                  filteredHives.map((item, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={{ width: "48%" }}
-                      onPress={() =>
-                        navigation.navigate("FolderLayout", {
-                          image: { uri: item.coverImage },
-                          folderName: item.hiveName,
-                          date: item.createdAt,
-                          hiveId: item._id,
-                          owner: item.user?.name,
-                          photos: item.images || [],
-                          eventTitle: item.hiveName,
-                          eventDescription: item.description,
-                          eventEndTime: item.endTime,
-                          eventExpiryDate: item.expiryDate,
-                          membersCount: item.members?.length || 0,
-                        })
-                      }
-                    >
-                      {/* Shadow Wrapper */}
-                      <View style={styles.cardWrapper}>
+                    ))
+                  ) : publicHives.length > 0 ? (
 
-                        {/* Actual Card */}
-                        <View style={styles.eventCard}>
+                    publicHives.map((item, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={{ width: "33.33%", aspectRatio: 1, padding: 1 }}
+                        onPress={() =>
+                          navigation.navigate("FolderLayout", {
+                            image: { uri: item.coverImage },
+                            folderName: item.hiveName,
+                            hiveId: item._id,
+                          })
+                        }
+                      >
+                        <Image
+                          source={{ uri: item.coverImage }}
+                          style={{ width: "100%", height: "100%" }}
+                        />
+                      </TouchableOpacity>
+                    ))
 
-                          <Image
-                            source={{ uri: item.coverImage }}
-                            style={styles.eventImage}
-                          />
-
-                          {/* LOCK ICON */}
-                          <View
-                            style={{
-                              position: "absolute",
-                              right: 12,
-                              top: 12,
-                              padding: 6,
-                              borderRadius: 20,
-                            }}
-                          >
-                            <Icon
-                              name="lock-fill"
-                              size={22}
-                              color="#fff"
-                              fallback={null}
-                            />
-                          </View>
-
-                          {/* BOTTOM GRADIENT */}
-                          <LinearGradient
-                            colors={["transparent", "rgba(0,0,0,0.9)"]}
-                            style={styles.overlay}
-                          >
-                            <View style={{ flex: 1 }}>
-                              <CustomText
-                                weight="bold"
-                                style={styles.overlayTitle}
-                              >
-                                {item.hiveName.length > 12
-                                  ? item.hiveName.substring(0, 12) + "..."
-                                  : item.hiveName}
-                              </CustomText>
-
-                              <View
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  gap: 4
-                                }}
-                              >
-                                <Heart
-                                  fill={"#fff"}
-                                  color={"#fff"}
-                                  size={15}
-                                />
-
-                                <CustomText style={styles.overlayMembers}>
-                                  {item.members?.length || 0}
-                                </CustomText>
-                              </View>
-                            </View>
-                          </LinearGradient>
-
-                        </View>
-
-                      </View>
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <View
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 10,
-                      marginTop: 60,
-                      marginBottom: 80,
-                      width: '100%',
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 60,
-                        height: 60,
-                        backgroundColor: '#f7a0c7ff',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 50,
-                      }}
-                    >
-                      <ImagePlus color="#ffffff" size={28} />
+                  ) : (
+                    <View style={{ width: "100%", alignItems: "center", marginTop: 60 }}>
+                      <CustomText>No Public Posts</CustomText>
                     </View>
+                  )}
 
-                    <CustomText weight="medium" style={{ color: '#6B7280' }}>
-                      {searchQuery ? t('noHivesFound') : t('noHivesYet')}
-                    </CustomText>
+                </View>
+              )}
 
-                    {!searchQuery && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <CustomText
-                          weight="bold"
-                          style={{ color: '#DA3C84' }}
-                          onPress={() => navigation.navigate('CreateHive')}
-                        >
-                          {t('createYourFirstHive')}
-                        </CustomText>
-                        <MoveRight color="#DA3C84" />
-                      </View>
-                    )}
-                  </View>
-                )}
-              </View>
+              {/* PROFILE TAB (INVITE ONLY) */}
+              {tab === "profile" && (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 16 }}>
+
+                  {inviteHives.length > 0 ? (
+
+                    inviteHives.map((item, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={{ width: "33.33%", aspectRatio: 1, padding: 1 }}
+                        onPress={() =>
+                          navigation.navigate("FolderLayout", {
+                            image: { uri: item.coverImage },
+                            folderName: item.hiveName,
+                            hiveId: item._id,
+                            
+                          })
+                        }
+                      >
+                        <Image
+                          source={{ uri: item.coverImage }}
+                          style={{ width: "100%", height: "100%" }}
+                        />
+
+
+
+                      </TouchableOpacity>
+                    ))
+
+                  ) : (
+                    <View style={{ width: "100%", alignItems: "center", marginTop: 60 }}>
+                      <CustomText>No Private Posts</CustomText>
+                    </View>
+                  )}
+
+                </View>
+              )}
+
             </View>
           </View>
         </ScrollView>
@@ -1011,17 +864,7 @@ const styles = StyleSheet.create({
     paddingVertical: height * 0.012,
     paddingHorizontal: width * 0.08,
     borderRadius: 6,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        shadowOffset: { width: 0, height: 2 },
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+
   },
   continueTxt: {
     fontSize: width * 0.04,
@@ -1101,17 +944,7 @@ const styles = StyleSheet.create({
 
     marginTop: 14,
 
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        shadowOffset: { width: 0, height: 1 },
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+
   },
   cameraIcon: {
     width: width * 0.13,
@@ -1128,11 +961,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 20,
   },
-  importSub: {
-    marginTop: 10,
-    fontSize: 28,
-    color: colors.primary,
-  },
+
   importSubLine: {
     marginTop: 10,
     fontSize: 14,
@@ -1153,20 +982,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginVertical: 10,
     // ⭐ Cross-platform shadow
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.10,
-        shadowRadius: 10,
-        shadowOffset: {
-          width: 0,
-          height: 5,
-        },
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+
 
   },
   laterBtn: {
@@ -1179,11 +995,11 @@ const styles = StyleSheet.create({
 
   dashCard: {
     width: "30%",
-    backgroundColor: "#ffffff59",
+    backgroundColor: "#F3F2F7",
     paddingVertical: height * 0.01,
-    paddingHorizontal: width * 0.03,
+    paddingHorizontal: width * 0.02,
 
-    borderRadius: 18,
+    borderRadius: 8,
 
     alignItems: 'center',
     justifyContent: 'center',
@@ -1196,8 +1012,8 @@ const styles = StyleSheet.create({
 
   },
   dashText: {
-    color: '#6B7280',
-    fontSize: 15,
+    color: colors.black,
+    fontSize: 12,
   },
   icon: {
     width: width * 0.12,
@@ -1206,9 +1022,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardText: {
-    fontSize: width * 0.07,
+    fontSize: width * 0.06,
     fontWeight: '600',
-    color: '#000',
+    color: colors.black,
     lineHeight: 35,
   },
   newEvent: {
@@ -1228,11 +1044,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 1,
+
   },
   cardImg: {
     width: '100%',
@@ -1246,26 +1058,12 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 16,
   },
-  eventCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    // overflow: 'hidden',
-    // padding: 12,
-    marginBottom: 16,
-    shadowColor: '#7a7979',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20,
-    shadowRadius: 6,
-    elevation: 6,
-  },
+
   eventImage: {
     width: '100%',
     height: 140,
     resizeMode: 'cover',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomRightRadius: 0,
-    borderBottomLeftRadius: 0,
+
   },
   eventInfo: {
     paddingTop: 14,
@@ -1335,7 +1133,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 25,
-    paddingHorizontal: 24,
+    // paddingHorizontal: 24,
     paddingVertical: 18,
     marginTop: 16,
     marginBottom: 8,
@@ -1360,7 +1158,7 @@ const styles = StyleSheet.create({
 
   overlayTitle: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 9,
   },
 
   overlayMembers: {
@@ -1369,25 +1167,10 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: "100%",
-    marginBottom: 16,
-    borderRadius: 12,
-
-    // iOS Shadow
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-
-    // Android Shadow
-    elevation: 6,
   },
 
   eventCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
     overflow: 'hidden', // Safe here now
   },
 
